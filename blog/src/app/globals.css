@@ -89,23 +89,23 @@
 
 /* ─── Light Theme ─── */
 :root {
-  --background: #faf9f7;
-  --foreground: #0f2b1f;
+  --background: #fafafa;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #0f2b1f;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #0f2b1f;
+  --popover-foreground: #0f172a;
   --primary: #2563eb;
   --primary-foreground: #ffffff;
-  --secondary: #f0efe9;
-  --secondary-foreground: #0f2b1f;
-  --muted: #f0efe9;
-  --muted-foreground: #5a7a6a;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
   --accent: #dbeafe;
   --accent-foreground: #1e40af;
   --destructive: #dc2626;
-  --border: #e8e6e0;
-  --input: #dddbd5;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
   --ring: #3b82f6;
 
   /* Brand palette */
@@ -123,33 +123,33 @@
   --radius: 0.625rem;
 
   /* Grid pattern */
-  --grid: #c4c2bb;
+  --grid: #cbd5e1;
 
   /* Sidebar — light */
   --sidebar: #ffffff;
-  --sidebar-foreground: #0f2b1f;
+  --sidebar-foreground: #0f172a;
   --sidebar-primary: #2563eb;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #dbeafe;
   --sidebar-accent-foreground: #1e40af;
-  --sidebar-border: #e8e6e0;
+  --sidebar-border: #e2e8f0;
   --sidebar-ring: #3b82f6;
 }
 
 /* ─── Dark Theme (default) ─── */
 .dark {
-  --background: #0e1f18;
-  --foreground: #ebe8e2;
-  --card: #162a20;
-  --card-foreground: #ebe8e2;
-  --popover: #162a20;
-  --popover-foreground: #ebe8e2;
+  --background: #0a0a0f;
+  --foreground: #f1f5f9;
+  --card: #111118;
+  --card-foreground: #f1f5f9;
+  --popover: #111118;
+  --popover-foreground: #f1f5f9;
   --primary: #3b82f6;
   --primary-foreground: #ffffff;
-  --secondary: #1a3328;
-  --secondary-foreground: #ebe8e2;
-  --muted: #1a3328;
-  --muted-foreground: #8aaa97;
+  --secondary: #1a1a24;
+  --secondary-foreground: #f1f5f9;
+  --muted: #1a1a24;
+  --muted-foreground: #94a3b8;
   --accent: #1e3a8a;
   --accent-foreground: #dbeafe;
   --destructive: #ef4444;
@@ -170,14 +170,14 @@
   --chart-5: #1e40af;
 
   /* Grid pattern */
-  --grid: #2a4a38;
+  --grid: #1e1e2a;
 
   /* Sidebar — dark */
-  --sidebar: #162a20;
-  --sidebar-foreground: #ebe8e2;
+  --sidebar: #111118;
+  --sidebar-foreground: #f1f5f9;
   --sidebar-primary: #3b82f6;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1a3328;
+  --sidebar-accent: #1a1a24;
   --sidebar-accent-foreground: #dbeafe;
   --sidebar-border: rgba(255, 255, 255, 0.1);
   --sidebar-ring: #2563eb;
@@ -228,7 +228,7 @@
     width: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #0e1f18;
+    background: #0a0a0f;
   }
   :root ::-webkit-scrollbar-track {
     background: #f1f5f9;
