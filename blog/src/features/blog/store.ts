@@ -116,6 +116,22 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         .sort((a, b) => (b.likes || 0) - (a.likes || 0))
         .slice(0, 3);
 
+      // Check if there's a pending unresolved category name from URL params
+      // (hydrateFromParams may have run before categories were loaded)
+      const { activeCategory } = get();
+      let resolvedCategory = activeCategory;
+      if (activeCategory && activeCategory !== "all") {
+        const isAlreadyId = categories.some((c) => c._id === activeCategory);
+        if (!isAlreadyId) {
+          const found = categories.find(
+            (c) => c.name.toLowerCase() === activeCategory.toLowerCase()
+          );
+          if (found) {
+            resolvedCategory = found._id;
+          }
+        }
+      }
+
       set({
         blogs,
         blogCategories: categories,
@@ -126,6 +142,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         hasMorePosts: hasMore,
         blogsLoading: false,
         categoriesLoading: false,
+        activeCategory: resolvedCategory,
         error: null,
       });
     },

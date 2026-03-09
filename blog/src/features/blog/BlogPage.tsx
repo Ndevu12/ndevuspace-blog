@@ -72,12 +72,16 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
     }
   }, [initialBlogs, initialCategories, hydrateFromServer]);
 
-  // Fetch blogs when filters change (skip initial — already hydrated from server)
+  // Fetch blogs when filters change (skip initial only if no URL params are active,
+  // since server data is unfiltered)
   const initialRender = useRef(true);
   useEffect(() => {
     if (initialRender.current) {
       initialRender.current = false;
-      return;
+      // If a filter is already active from URL params, fetch filtered data
+      if (activeCategory === "all" && !activeTag && !searchQuery) {
+        return;
+      }
     }
     fetchFilteredBlogs();
   }, [activeCategory, activeTag, searchQuery, fetchFilteredBlogs]);
