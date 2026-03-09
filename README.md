@@ -12,7 +12,7 @@ A modern tech blog built with **Next.js 16**, **React 19**, and **Tailwind CSS v
 | UI | React 19, Tailwind CSS v4, shadcn/ui (base-nova) |
 | State | Zustand 5 |
 | Validation | Zod 4 |
-| Editor | TinyMCE (rich text) |
+| Editor | Custom rich text editor |
 | Charts | Recharts |
 | Animations | Framer Motion |
 | Icons | Lucide React |
@@ -96,7 +96,6 @@ cp .env.example .env
 | `NEXT_PUBLIC_API_BASE_URL` | Backend API URL | `https://my-brand-backend-apis.onrender.com/v1` |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL | `https://blog.ndevuspace.com` |
 | `NEXT_PUBLIC_USE_DUMMY_DATA` | Use in-memory dummy data | `false` |
-| `NEXT_PUBLIC_TINYMCE_API_KEY` | TinyMCE editor API key | — |
 
 ### Development
 

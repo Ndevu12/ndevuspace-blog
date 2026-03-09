@@ -5,9 +5,6 @@ import { getEnv } from "./envConfig";
 export const API_BASE_URL =
   getEnv("NEXT_PUBLIC_API_BASE_URL", "https://my-brand-backend-apis.onrender.com/v1");
 
-export const TINYMCE_API_KEY =
-  getEnv("NEXT_PUBLIC_TINYMCE_API_KEY", "");
-
 export const SITE_URL =
   getEnv("NEXT_PUBLIC_SITE_URL", "https://blog.ndevuspace.com");
 
