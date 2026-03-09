@@ -1,8 +1,0 @@
-{
-    "CodeGPT.apiKey": "CodeGPT Plus Beta",
-    "files.autoSaveWhenNoErrors": true,
-    "files.autoSaveWorkspaceFilesOnly": false,
-    "files.autoSave": "onFocusChange",
-    "files.autoSaveDelay": 100,
-    "editor.autoIndent": "advanced"
-}
