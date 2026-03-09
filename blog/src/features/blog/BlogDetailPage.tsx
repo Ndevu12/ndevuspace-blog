@@ -242,13 +242,13 @@ export function BlogDetailPage({ post }: BlogDetailPageProps) {
             </Card>
 
             {/* Comments Section */}
-            <section className="mt-12 space-y-8">
+            {/* <section className="mt-12 space-y-8">
               <CommentList comments={comments} />
               <CommentForm
                 blogId={post._id}
                 onCommentAdded={addComment}
               />
-            </section>
+            </section> */}
 
             {/* Related Posts */}
             {relatedPosts.length > 0 && (
