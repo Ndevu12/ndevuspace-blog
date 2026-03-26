@@ -3,7 +3,7 @@ import { getEnv } from "./envConfig";
 // API configuration constants
 
 export const API_BASE_URL =
-  getEnv("NEXT_PUBLIC_API_BASE_URL", "https://my-brand-backend-apis.onrender.com/v1");
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://my-brand-backend-apis.onrender.com/v1";
 
 export const SITE_URL =
   getEnv("NEXT_PUBLIC_SITE_URL", "https://blog.ndevuspace.com");

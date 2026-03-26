@@ -22,7 +22,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  email: z.email("Valid email is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -40,7 +40,7 @@ export function LoginForm() {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { username: "", password: "" },
+    defaultValues: { email: "", password: "" },
   });
 
   function onSubmit(data: LoginFormValues) {
@@ -68,18 +68,18 @@ export function LoginForm() {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="username"
-              type="text"
-              placeholder="Enter your username"
-              autoComplete="username"
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              autoComplete="email"
               disabled={isPending}
-              {...register("username")}
+              {...register("email")}
             />
-            {errors.username && (
+            {errors.email && (
               <p className="text-sm text-destructive">
-                {errors.username.message}
+                {errors.email.message}
               </p>
             )}
           </div>
