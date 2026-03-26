@@ -40,8 +40,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { adminBlogService } from "@/services/adminBlogService";
 import type { AdminBlogPost } from "@/types/admin";
+import { dashboardBlogService } from "@/features/dashboard/services/dashboardBlogService";
 
 interface AdminBlogDetailProps {
   blogId: string;
@@ -59,7 +59,7 @@ export function AdminBlogDetail({ blogId }: AdminBlogDetailProps) {
       try {
         setLoading(true);
         setError(null);
-        const data = await adminBlogService.getBlogById(blogId);
+        const data = await dashboardBlogService.getBlogById(blogId);
         if (!data) {
           setError("Blog not found");
           return;
@@ -78,7 +78,7 @@ export function AdminBlogDetail({ blogId }: AdminBlogDetailProps) {
   function handleDelete() {
     startTransition(async () => {
       try {
-        await adminBlogService.deleteBlog(blogId);
+        await dashboardBlogService.deleteBlog(blogId);
         toast.success("Blog deleted successfully");
         router.push("/dashboard/blogs");
       } catch {
@@ -92,7 +92,7 @@ export function AdminBlogDetail({ blogId }: AdminBlogDetailProps) {
     startTransition(async () => {
       try {
         const newStatus = blog.status === "published" ? "draft" : "published";
-        await adminBlogService.updateBlogStatus(blogId, newStatus);
+        await dashboardBlogService.updateBlogStatus(blogId, newStatus);
         setBlog({ ...blog, status: newStatus });
         toast.success(`Blog ${newStatus === "published" ? "published" : "unpublished"}`);
       } catch {

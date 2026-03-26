@@ -1,7 +1,15 @@
 import { createBrowserClient } from "@supabase/ssr";
-import { getSupabaseEnvConfig } from "@/lib/supabase/env";
+import { getSupabasePublicConfigRequired } from "@/lib/config";
 
 export const createClient = () => {
-  const { url, anonKey } = getSupabaseEnvConfig();
-  return createBrowserClient(url, anonKey);
+  try {
+    const { url, anonKey } = getSupabasePublicConfigRequired();
+    console.log("Creating Supabase client.");
+    const client = createBrowserClient(url, anonKey);
+    console.log("Supabase client created.");
+    return client;
+  } catch (error) {
+    console.error("Error creating Supabase client.");
+    throw error;
+  }
 };

@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useEffect, useRef } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { BlogCard } from "./components/BlogCard";
 import { FeaturedBlogCard } from "./components/FeaturedBlogCard";
 import { BlogSidebar } from "./components/BlogSidebar";
@@ -28,6 +30,10 @@ export interface BlogPageProps {
 }
 
 export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   // ─── Store ───
   const {
     blogs,
@@ -85,6 +91,19 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
     }
     fetchFilteredBlogs();
   }, [activeCategory, activeTag, searchQuery, fetchFilteredBlogs]);
+
+  useEffect(() => {
+    if (searchParams.get("accessDenied") !== "1") {
+      return;
+    }
+
+    toast.error("Access Denied");
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("accessDenied");
+    const nextUrl = nextParams.size > 0 ? `${pathname}?${nextParams.toString()}` : pathname;
+    router.replace(nextUrl);
+  }, [pathname, router, searchParams]);
 
   // Sort posts client-side (derived state)
   const filteredPosts = useMemo(() => {

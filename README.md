@@ -42,20 +42,26 @@ src/
 │   └── dashboard/          # Admin panel (auth-guarded)
 │       ├── blogs/          # Blog CRUD
 │       └── categories/     # Category management
-├── components/
-│   ├── layout/             # Header, Footer, Sidebar
-│   └── ui/                 # shadcn/ui primitives (30+)
-├── features/
-│   ├── auth/               # AuthContext, AuthGuard, LoginForm
-│   ├── blog/               # BlogPage, BlogDetailPage, stores
-│   ├── comments/           # CommentForm, CommentList
-│   └── dashboard/          # Admin features
-├── hooks/                  # 10 custom hooks
-├── lib/                    # Constants, utils, SEO config, env
-├── services/               # API + dummy service layer
+├── components/             # Shared UI (layout + shadcn/ui primitives)
+├── features/               # Self-contained feature modules (preferred)
+│   ├── <featureName>/
+│   │   ├── components/     # Feature UI (optional)
+│   │   ├── hooks/          # `use*` hooks (optional)
+│   │   ├── services/       # Feature service functions (optional)
+│   │   ├── store/          # Zustand stores (optional)
+│   │   ├── types/          # Feature-local types (optional)
+│   │   ├── utils/          # Feature-local helpers (optional)
+│   │   └── index.ts        # Public feature exports (required)
+│   └── ...
+├── lib/                    # Shared config/env/utils/SEO helpers
+├── services/               # Cross-feature services (API, dummy services)
 ├── data/                   # Dummy blogs & categories
-└── types/                  # TypeScript domain types
+└── types/                  # Cross-feature domain types
 ```
+
+## Feature Folder Rules
+
+Feature code must be **self-contained** and follow the per-feature structure (`hooks/`, `store/`, `services/`, etc.). See `[docs/FEATURES.md](docs/FEATURES.md)`.
 
 ## Service Architecture
 

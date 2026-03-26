@@ -11,7 +11,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="admin">
       <SidebarProvider>
         <DashboardSidebar />
         <SidebarInset>

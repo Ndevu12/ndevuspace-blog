@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { formatDistanceToNow } from "date-fns";
-import { adminBlogService } from "@/services/adminBlogService";
 import type { BlogPost } from "@/types/blog";
 import { FileText, Eye, Heart } from "lucide-react";
+import { dashboardBlogService } from "@/features/dashboard/services/dashboardBlogService";
 
 interface StatCard {
   title: string;
@@ -39,7 +39,7 @@ export const useDashboardOverviewStore = create<DashboardOverviewState>(
     loadStats: async () => {
       set({ statsLoading: true });
       try {
-        const response = await adminBlogService.getAdminBlogs({
+        const response = await dashboardBlogService.getAdminBlogs({
           page: 1,
           limit: 1,
           status: "",
@@ -51,7 +51,7 @@ export const useDashboardOverviewStore = create<DashboardOverviewState>(
 
         const totalBlogs = response.pagination.totalBlogs;
 
-        const publishedResponse = await adminBlogService.getAdminBlogs({
+        const publishedResponse = await dashboardBlogService.getAdminBlogs({
           page: 1,
           limit: 1,
           status: "published",
@@ -114,7 +114,7 @@ export const useDashboardOverviewStore = create<DashboardOverviewState>(
     loadRecentActivity: async () => {
       set({ activitiesLoading: true });
       try {
-        const response = await adminBlogService.getAdminBlogs({
+        const response = await dashboardBlogService.getAdminBlogs({
           page: 1,
           limit: 5,
           status: "",

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAllCategories } from "@/services/resolvedCategoryService";
+import { getAllCategories } from "@/features/dashboard/categories/services/resolvedCategoryService";
 import type { BlogCategory } from "@/types/blog";
 
 /**

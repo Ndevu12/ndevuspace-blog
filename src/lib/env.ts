@@ -1,48 +1,59 @@
 export type EnvSource = Record<string, string | undefined>;
-type ImportMetaWithEnv = ImportMeta & { env?: EnvSource };
 
-const getDefaultClientEnvSource = (): EnvSource => {
-  const importMetaEnv = (import.meta as ImportMetaWithEnv).env;
-  if (importMetaEnv) {
-    return importMetaEnv;
-  }
+type ClientEnvKey =
+  | "NEXT_PUBLIC_SITE_URL"
+  | "NEXT_PUBLIC_USE_DUMMY_DATA"
+  | "NEXT_PUBLIC_SUPABASE_URL"
+  | "NEXT_PUBLIC_SUPABASE_ANON_KEY";
 
-  if (typeof process !== "undefined") {
-    return process.env;
-  }
+export type ClientEnv = Record<ClientEnvKey, string | undefined>;
 
-  return {};
+const normalizeEnv = (value: string | undefined): string | undefined => {
+  const normalized = value?.trim();
+  return normalized ? normalized : undefined;
 };
 
-export const readServerEnv = (key: string, env: EnvSource = process.env): string | undefined => {
-  return env[key];
+// Single server-side env accessor.
+export const readServerEnv = (key: string): string | undefined => {
+  const value = normalizeEnv(process.env[key]);
+  return value;
 };
 
-export const readRequiredServerEnv = (key: string, env: EnvSource = process.env): string => {
-  const value = readServerEnv(key, env);
+export const readRequiredServerEnv = (key: string): string => {
+  const value = readServerEnv(key);
   if (!value) {
     throw new Error(`Missing server environment variable: ${key}`);
   }
   return value;
 };
 
-export const readClientEnv = (key: string, env: EnvSource = getDefaultClientEnvSource()): string | undefined => {
-  if (!key.startsWith("NEXT_PUBLIC_")) {
-    throw new Error(`Client env key must start with NEXT_PUBLIC_: ${key}`);
-  }
-  return env[key];
+// Single client env loader that serves all NEXT_PUBLIC_* values we support.
+export const getClientEnv = (): ClientEnv => {
+  const env = {
+    NEXT_PUBLIC_SITE_URL: normalizeEnv(process.env.NEXT_PUBLIC_SITE_URL),
+    NEXT_PUBLIC_USE_DUMMY_DATA: normalizeEnv(process.env.NEXT_PUBLIC_USE_DUMMY_DATA),
+    NEXT_PUBLIC_SUPABASE_URL: normalizeEnv(process.env.NEXT_PUBLIC_SUPABASE_URL),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: normalizeEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+  };
+  return env;
 };
 
-export const readRequiredClientEnv = (key: string, env: EnvSource = getDefaultClientEnvSource()): string => {
-  const value = readClientEnv(key, env);
+export const readClientEnv = (key: ClientEnvKey): string | undefined => {
+  return getClientEnv()[key];
+};
+
+export const readRequiredClientEnv = (key: ClientEnvKey): string => {
+  const value = readClientEnv(key);
   if (!value) {
     throw new Error(`Missing client environment variable: ${key}`);
   }
   return value;
 };
 
-// Flag to determine whether to use dummy data, can be overridden by environment variable
 export const IS_USE_DUMMY_DATA_ENABLED = (readClientEnv("NEXT_PUBLIC_USE_DUMMY_DATA") ?? "false").toLowerCase() === "true";
 
-// Site URL for SEO and sitemap generation, can be overridden by environment variable
 export const SITE_URL = readClientEnv("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000";
+
+export const readOptionalDatabaseUrl = (): string | undefined => {
+  return readServerEnv("DATABASE_URL");
+};

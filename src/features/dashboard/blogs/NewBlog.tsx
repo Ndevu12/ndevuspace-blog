@@ -39,8 +39,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
-import { adminBlogService } from "@/services/adminBlogService";
 import { useCategories, useTagInput } from "@/hooks";
+import { dashboardBlogService } from "@/features/dashboard/services/dashboardBlogService";
 
 const blogFormSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -113,7 +113,7 @@ export function NewBlog() {
         if (data.metaDescription) formData.append("metaDescription", data.metaDescription);
         formData.append("status", data.status);
 
-        await adminBlogService.createBlog(formData);
+        await dashboardBlogService.createBlog(formData);
         toast.success(
           data.status === "published"
             ? "Blog published successfully!"

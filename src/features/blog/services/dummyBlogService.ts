@@ -1,10 +1,8 @@
 // Dummy blog service — mirrors blogService.ts interface using in-memory data
-// Used when NEXT_PUBLIC_USE_DUMMY_DATA=true, resolved at the consumer (store) level
+// Used when NEXT_PUBLIC_USE_DUMMY_DATA=true, resolved at the consumer level
 
 import type { BlogCategory, BlogPost, PaginatedBlogsResponse } from "@/types/blog";
 import { dummyBlogs, dummyCategories } from "@/data/dummyBlogs";
-
-// ─── Helpers ───
 
 function paginate(
   posts: BlogPost[],
@@ -31,14 +29,10 @@ function sortByNewest(posts: BlogPost[]): BlogPost[] {
   );
 }
 
-// ─── Public API (same signatures as blogService) ───
-
-/** Fetch recent blogs */
 export async function getRecentBlogs(limit: number = 3): Promise<BlogPost[]> {
   return sortByNewest(dummyBlogs).slice(0, limit);
 }
 
-/** Fetch paginated blogs for the listing page */
 export async function getBlogsPaginated(
   page: number = 1,
   limit: number = 10
@@ -46,17 +40,14 @@ export async function getBlogsPaginated(
   return paginate(sortByNewest(dummyBlogs), page, limit);
 }
 
-/** Fetch a single blog by ID */
 export async function getBlogById(id: string): Promise<BlogPost | null> {
   return dummyBlogs.find((b) => b._id === id) ?? null;
 }
 
-/** Fetch a single blog by slug */
 export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
   return dummyBlogs.find((b) => b.slug === slug) ?? null;
 }
 
-/** Fetch blogs by category */
 export async function getBlogsByCategory(
   categoryId: string,
   page: number = 1,
@@ -66,7 +57,6 @@ export async function getBlogsByCategory(
   return paginate(filtered, page, limit);
 }
 
-/** Fetch blogs by tag */
 export async function getBlogsByTag(
   tag: string,
   page: number = 1,
@@ -81,7 +71,6 @@ export async function getBlogsByTag(
   return { ...paginate(filtered, page, limit), filters: {} };
 }
 
-/** Search blogs by title */
 export async function searchBlogsByTitle(
   query: string,
   page: number = 1,
@@ -96,7 +85,6 @@ export async function searchBlogsByTitle(
   return paginate(filtered, page, limit);
 }
 
-/** Like / unlike a blog post (simulated) */
 export async function likeBlog(
   blogId: string
 ): Promise<{ likes: number } | null> {
@@ -104,15 +92,12 @@ export async function likeBlog(
   return post ? { likes: (post.likes ?? 0) + 1 } : null;
 }
 
-/** Fetch blog author by blog ID */
 export async function getAuthorByBlogId(blogId: string) {
   const post = dummyBlogs.find((b) => b._id === blogId);
   return post?.author ?? null;
 }
 
-// ─── Category Endpoints ───
-
-/** Fetch all blog categories */
 export async function getAllBlogCategories(): Promise<BlogCategory[]> {
   return dummyCategories;
 }
+

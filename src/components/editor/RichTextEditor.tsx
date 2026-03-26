@@ -103,7 +103,10 @@ export function RichTextEditor({
 
   // Track whether the editor has focus so we can show/hide placeholder
   const [hasFocus, setHasFocus] = useState(false);
-  const [isEmpty, setIsEmpty] = useState(!content);
+  const isEmpty =
+    !content ||
+    content === "<br>" ||
+    content === "<p><br></p>";
   // Track active formatting state for visual feedback on toolbar buttons
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
 
@@ -118,7 +121,6 @@ export function RichTextEditor({
     const el = editorRef.current;
     if (el && el.innerHTML !== content) {
       el.innerHTML = content;
-      setIsEmpty(!content || content === "<br>");
     }
   }, [content]);
 
@@ -161,7 +163,6 @@ export function RichTextEditor({
     const html = el.innerHTML;
     isInternalChange.current = true;
     onContentChange(html);
-    setIsEmpty(!html || html === "<br>");
     updateActiveFormats();
   }, [onContentChange, updateActiveFormats]);
 

@@ -1,0 +1,65 @@
+---
+description: Enforce self-contained feature folder structure and boundaries
+alwaysApply: true
+---
+
+# Self-contained features (required)
+
+## Feature contract
+
+- A **feature** is a folder under `src/features/<featureName>/` that is a self-contained module.
+- A feature may expose a small public surface area; internal files should not be imported from outside the feature.
+
+## Required per-feature structure
+
+Every feature folder must follow this structure (create folders as needed):
+
+```
+src/features/<featureName>/
+  components/        # feature UI components (optional)
+  hooks/             # React hooks (required if feature has hooks)
+  services/          # feature service functions (required if feature has services)
+  store/             # zustand stores (required if feature has global/local state)
+  types/             # feature-local types (optional)
+  utils/             # feature-local helpers (optional)
+  index.ts           # public exports (required)
+```
+
+## Naming conventions
+
+- Hooks: `src/features/<featureName>/hooks/useX*.ts(x)` (e.g. `useAuth`, `useAuthSync`)
+- Stores: `src/features/<featureName>/store/*Store.ts` or `*Store.ts` (e.g. `authStore.ts`, exporting `useAuthStore`)
+- Services: `src/features/<featureName>/services/*Service.ts` (pure functions; avoid React hooks inside)
+
+## Import boundaries (strict)
+
+- Other code should import from **feature entrypoints**:
+  - Prefer `@/features/<featureName>` (via `src/features/<featureName>/index.ts`)
+  - Or `@/features/<featureName>/hooks/useX` only when explicitly treated as part of the public API
+- Do **not** import deep internal files from another feature unless they are exported by that feature’s `index.ts`.
+- Feature code may import from shared layers:
+  - `@/components/*` (shared UI)
+  - `@/lib/*` (shared utilities/config/env)
+  - `@/services/*` (cross-feature/shared services only)
+  - `@/types/*` (cross-feature domain types only)
+
+## Separation rules (what goes where)
+
+- **hooks/**: React/Next hooks, effects, subscriptions, UI-driven orchestration.
+- **store/**: zustand state + actions (no JSX). Keep actions thin; delegate side effects to `services/`.
+- **services/**: side-effectful functions (API calls, Supabase calls, serialization). No React imports.
+- **components/**: UI and composition; call hooks, render JSX.
+
+## Examples
+
+✅ Good:
+
+- `@/features/auth` exports `AuthGuard`, `LoginForm`
+- `@/features/auth/hooks/useAuth` is used by auth-related UI and guards
+- `@/features/blog/store/blogListingStore` contains zustand logic; it calls `@/features/blog/services/blogListingService`
+
+❌ Avoid:
+
+- Importing `@/features/auth/store/authStore` from random places if the feature intends `useAuth` to be the public API
+- Putting API calls inside components when a service exists
+- Creating new global stores under `src/store/` (prefer per-feature stores under the feature)

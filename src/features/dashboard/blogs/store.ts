@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import { adminBlogService } from "@/services/adminBlogService";
 import type { BlogAdminFilters, BlogAdminPagination } from "@/types/admin";
 import type { BlogPost } from "@/types/blog";
+import { dashboardBlogService } from "@/features/dashboard/services/dashboardBlogService";
 
 const DEFAULT_FILTERS: BlogAdminFilters = {
   page: 1,
@@ -67,7 +67,7 @@ export const useAllBlogsStore = create<AllBlogsState>((set, get) => ({
     const { filters } = get();
     set({ loading: true, error: null });
     try {
-      const response = await adminBlogService.getAdminBlogs(filters);
+      const response = await dashboardBlogService.getAdminBlogs(filters);
       set({
         blogs: response.blogs,
         pagination: response.pagination,
@@ -84,7 +84,7 @@ export const useAllBlogsStore = create<AllBlogsState>((set, get) => ({
   },
 
   deleteBlog: async (blogId) => {
-    await adminBlogService.deleteBlog(blogId);
+    await dashboardBlogService.deleteBlog(blogId);
     // Reload after deletion
     await get().loadBlogs();
   },
