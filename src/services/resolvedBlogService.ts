@@ -2,7 +2,7 @@
 // Env check happens exactly ONCE at module evaluation time.
 // All consumers import from here — no need to know about the data source.
 
-import { IS_USE_DUMMY_DATA_ENABLED } from "@/lib/envConfig";
+import { IS_USE_DUMMY_DATA_ENABLED } from "@/lib/env";
 import * as blogApi from "./blogService";
 import * as dummyBlogApi from "./dummyBlogService";
 
