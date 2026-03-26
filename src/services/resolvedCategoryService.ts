@@ -1,7 +1,7 @@
 // Resolved category service — env check happens once at module evaluation
 // All consumers import from here. Write operations (CRUD) always use the real API.
 
-import { IS_USE_DUMMY_DATA_ENABLED } from "@/lib/envConfig";
+import { IS_USE_DUMMY_DATA_ENABLED } from "@/lib/env";
 import * as categoryApi from "./categoryService";
 import * as dummyCategoryApi from "./dummyCategoryService";
 

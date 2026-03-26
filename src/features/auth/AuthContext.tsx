@@ -9,6 +9,7 @@ import {
 } from "react";
 import { authService } from "@/services/authService";
 import { createClient } from "@/lib/supabase/client";
+import { hasSupabaseEnvConfig } from "@/lib/supabase/env";
 import type { AuthState, LoginCredentials, User } from "@/types/auth";
 
 // ─── Context Type ───
@@ -33,6 +34,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Resolve initial user and keep auth state synced with Supabase session events.
   useEffect(() => {
+    if (!hasSupabaseEnvConfig()) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(
+          "Supabase auth is disabled: missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+        );
+      }
+      setIsLoading(false);
+      return;
+    }
+
     const supabase = createClient();
     let cancelled = false;
 
