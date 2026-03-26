@@ -4,7 +4,7 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
-} from "@/services/resolvedCategoryService";
+} from "./services/resolvedCategoryService";
 import type { BlogCategory } from "@/types/blog";
 import type { CategoryFormData } from "@/types/admin";
 

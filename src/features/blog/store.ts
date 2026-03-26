@@ -8,7 +8,7 @@ import {
   getBlogsByCategory,
   getBlogsByTag,
   searchBlogsByTitle,
-} from "@/services/resolvedBlogService";
+} from "./services/resolvedBlogService";
 
 // ─── Types ───
 

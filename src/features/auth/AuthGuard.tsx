@@ -1,26 +1,41 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface AuthGuardProps {
   children: ReactNode;
+  requiredRole?: string;
 }
 
 /**
  * Wraps protected routes — redirects to login if unauthenticated
  */
-export function AuthGuard({ children }: AuthGuardProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const normalizedUserRole = (user?.role ?? "user").trim().toLowerCase();
+  const normalizedRequiredRole = requiredRole?.trim().toLowerCase();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace("/auth/login");
+      const loginUrl = pathname ? `/auth/login?next=${encodeURIComponent(pathname)}` : "/auth/login";
+      router.replace(loginUrl);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, pathname, router]);
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || !normalizedRequiredRole) {
+      return;
+    }
+
+    if (normalizedUserRole !== normalizedRequiredRole) {
+      router.replace("/blog?accessDenied=1");
+    }
+  }, [isAuthenticated, isLoading, normalizedRequiredRole, normalizedUserRole, pathname, router]);
 
   if (isLoading) {
     return (
@@ -34,8 +49,14 @@ export function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
+  if (!isAuthenticated || (normalizedRequiredRole && normalizedUserRole !== normalizedRequiredRole)) {
+    return (
+      <div className="flex h-screen items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

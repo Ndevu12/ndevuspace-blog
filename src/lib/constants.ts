@@ -1,12 +1,8 @@
-import { readRequiredClientEnv } from "./env";
+import { getClientPublicConfig } from "@/lib/config";
 
-// API configuration constants
+const clientConfig = getClientPublicConfig();
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://my-brand-backend-apis.onrender.com/v1";
-
-export const SITE_URL =
-  readRequiredClientEnv("NEXT_PUBLIC_SITE_URL", { NEXT_PUBLIC_SITE_URL: "https://blog.ndevuspace.com" });
+export const SITE_URL = clientConfig.siteUrl;
 
 // Portfolio site link (for "back to portfolio" nav)
 export const PORTFOLIO_URL = "https://www.ndevuspace.com";

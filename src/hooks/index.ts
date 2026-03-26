@@ -2,7 +2,7 @@ export { useScrollSpy } from "./use-scroll-spy";
 export { useIntersectionObserver } from "./use-intersection-observer";
 export { useScrollDirection } from "./use-scroll-direction";
 export { useWindowSize } from "./use-window-size";
-export { useAuth } from "./use-auth";
+export { useAuth } from "@/features/auth/hooks/useAuth";
 export { useIsMobile } from "./use-mobile-hook";
 export { useDebouncedValue } from "./use-debounced-value";
 export { useCategories } from "./use-categories";

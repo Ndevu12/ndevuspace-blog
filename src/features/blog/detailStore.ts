@@ -7,7 +7,7 @@ import {
   getBlogsByCategory,
   getBlogsPaginated,
   likeBlog,
-} from "@/services/resolvedBlogService";
+} from "./services/resolvedBlogService";
 
 // ─── Types ───
 

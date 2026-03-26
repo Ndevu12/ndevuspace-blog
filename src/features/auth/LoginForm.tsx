@@ -1,7 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 const loginSchema = z.object({
   email: z.email("Valid email is required"),
@@ -29,9 +29,9 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const { login } = useAuth();
+  const { login, user, isAuthenticated, isLoading, isPending } = useAuth();
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -43,18 +43,37 @@ export function LoginForm() {
     defaultValues: { email: "", password: "" },
   });
 
+  function getPostLoginRoute(role: string | undefined): string {
+    if ((role ?? "user").trim().toLowerCase() !== "admin") {
+      return "/blog?accessDenied=1";
+    }
+
+    const next = searchParams.get("next");
+    if (next?.startsWith("/dashboard")) {
+      return next;
+    }
+
+    return "/dashboard";
+  }
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace(getPostLoginRoute(user?.role));
+    }
+  }, [isAuthenticated, isLoading, router, searchParams, user?.role]);
+
   function onSubmit(data: LoginFormValues) {
-    startTransition(async () => {
+    void (async () => {
       try {
-        await login(data);
+        const loggedInUser = await login(data);
         toast.success("Logged in successfully");
-        router.push("/dashboard");
+        router.push(getPostLoginRoute(loggedInUser.role));
       } catch (error) {
         toast.error(
           error instanceof Error ? error.message : "Login failed"
         );
       }
-    });
+    })();
   }
 
   return (

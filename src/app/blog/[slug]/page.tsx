@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getBlogBySlug } from "@/services/resolvedBlogService";
+import { getBlogBySlug } from "@/features/blog/services/resolvedBlogService";
 import { BlogDetailPage } from "@/features/blog/BlogDetailPage";
 import { buildBlogPostMetadata, blogNotFoundMetadata } from "@/lib/seo/seo";
 

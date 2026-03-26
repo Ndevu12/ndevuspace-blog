@@ -6,7 +6,7 @@ import { homeMetadata } from "../../lib/seo/metadata";
 import {
   getBlogsPaginated,
   getAllBlogCategories,
-} from "@/services/resolvedBlogService";
+} from "@/features/blog/services/resolvedBlogService";
 
 export const metadata: Metadata = homeMetadata;
 

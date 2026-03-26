@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { ConditionalFooter } from "@/components/layout/ConditionalFooter";
-import { AuthProvider } from "@/features/auth/AuthContext";
+import { AuthSync } from "@/features/auth/AuthSync";
 import { rootMetadata } from "@/lib/seo/seo";
 
 const inter = Inter({
@@ -29,21 +29,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="antialiased">
+      <body suppressHydrationWarning className="antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <TooltipProvider>
-              <Header />
-              {children}
-              <ConditionalFooter />
-            </TooltipProvider>
-            <Toaster richColors position="top-right" />
-          </AuthProvider>
+          <AuthSync />
+          <TooltipProvider>
+            <Header />
+            {children}
+            <ConditionalFooter />
+          </TooltipProvider>
+          <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>
     </html>
