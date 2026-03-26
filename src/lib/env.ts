@@ -40,3 +40,9 @@ export const readRequiredClientEnv = (key: string, env: EnvSource = getDefaultCl
   }
   return value;
 };
+
+// Flag to determine whether to use dummy data, can be overridden by environment variable
+export const IS_USE_DUMMY_DATA_ENABLED = (readClientEnv("NEXT_PUBLIC_USE_DUMMY_DATA") ?? "false").toLowerCase() === "true";
+
+// Site URL for SEO and sitemap generation, can be overridden by environment variable
+export const SITE_URL = readClientEnv("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000";

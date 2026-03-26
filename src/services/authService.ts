@@ -1,26 +1,38 @@
-// Auth service — ported from my-brand-nextjs/src/services/authService.ts
-
-import { API_BASE_URL } from "@/lib/constants";
-import { safeFetch } from "@/lib/api";
+import { createClient } from "@/lib/supabase/client";
 import type { LoginCredentials, AuthResponse, User } from "@/types/auth";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 // ─── Error Handling ───
 
-function getAuthErrorMessage(error: string | null, code?: string): string {
-  switch (code) {
-    case "INVALID_CREDENTIALS":
-      return "Invalid username or password";
-    case "USER_NOT_FOUND":
-      return "User not found";
-    case "USER_ALREADY_EXISTS":
-      return "User with this email already exists";
-    case "VALIDATION_ERROR":
-      return "Please check your input and try again";
-    case "UNAUTHORIZED":
-      return "You are not authorized to perform this action";
-    default:
-      return error || "Authentication failed";
+function getAuthErrorMessage(error: string | null): string {
+  if (!error) {
+    return "Authentication failed";
   }
+
+  // Supabase returns free-form messages; normalize only common credential failures.
+  const normalized = error.toLowerCase();
+  if (
+    normalized.includes("invalid login credentials") ||
+    normalized.includes("email not confirmed")
+  ) {
+    return "Invalid email or password";
+  }
+
+  return error;
+}
+
+function mapSupabaseUser(user: SupabaseUser): User {
+  const metadata = user.user_metadata ?? {};
+  return {
+    _id: user.id,
+    username: metadata.username ?? user.email ?? "",
+    email: user.email ?? "",
+    firstName: metadata.firstName ?? "",
+    lastName: metadata.lastName ?? "",
+    role: metadata.role ?? "user",
+    createdAt: user.created_at ?? new Date().toISOString(),
+    updatedAt: user.updated_at ?? user.created_at ?? new Date().toISOString(),
+  };
 }
 
 // ─── Auth Service ───
@@ -28,53 +40,42 @@ function getAuthErrorMessage(error: string | null, code?: string): string {
 class AuthService {
   /** Login user with credentials */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const result = await safeFetch<AuthResponse>(
-      `${API_BASE_URL}/auth/login`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: credentials.username,
-          password: credentials.password,
-        }),
-      }
-    );
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.password,
+    });
 
-    if (!result.success) {
-      throw new Error(getAuthErrorMessage(result.error, result.code));
+    if (error || !data.user) {
+      throw new Error(getAuthErrorMessage(error?.message ?? null));
     }
 
-    return result.data as AuthResponse;
+    return {
+      message: "Login successful",
+      user: mapSupabaseUser(data.user),
+    };
   }
 
   /** Logout current user */
   async logout(): Promise<void> {
-    const result = await safeFetch(`${API_BASE_URL}/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-    });
+    const supabase = createClient();
+    const { error } = await supabase.auth.signOut();
 
-    if (!result.success) {
-      throw new Error(getAuthErrorMessage(result.error, result.code));
+    if (error) {
+      throw new Error(getAuthErrorMessage(error.message ?? null));
     }
   }
 
   /** Get current user (check if authenticated) */
   async getCurrentUser(): Promise<User | null> {
-    const result = await safeFetch<User>(`${API_BASE_URL}/auth/me`, {
-      method: "GET",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-    });
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.getUser();
 
-    if (!result.success) {
-      // Not authenticated — return null without throwing
+    if (error || !data.user) {
       return null;
     }
 
-    return result.data;
+    return mapSupabaseUser(data.user);
   }
 }
 

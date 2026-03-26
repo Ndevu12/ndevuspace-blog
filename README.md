@@ -2,7 +2,7 @@
 
 A modern tech blog built with **Next.js 16**, **React 19**, and **Tailwind CSS v4**. Covers software engineering, web development, and technology topics.
 
-**Live:** [blog.ndevuspace.com](https://blog.ndevuspace.com) · **Portfolio:** [ndevuspace.com](https://www.ndevuspace.com)
+**Live:** [Blogs](https://blog.ndevuspace.com) · **Portfolio:** [NdevuSpace](https://www.ndevuspace.com)
 
 ## Tech Stack
 
@@ -93,7 +93,6 @@ cp .env.example .env
 
 | Variable | Description | Default |
 |---|---|---|
-| `NEXT_PUBLIC_API_BASE_URL` | Backend API URL | `https://my-brand-backend-apis.onrender.com/v1` |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL | `https://blog.ndevuspace.com` |
 | `NEXT_PUBLIC_USE_DUMMY_DATA` | Use in-memory dummy data | `false` |
 
@@ -130,13 +129,6 @@ yarn lint         # Run ESLint
 | `/dashboard/blogs/:id/edit` | Edit blog |
 | `/dashboard/categories` | Category management |
 
-## Blog Categories
-
-Web Development · Design · Technology · DevOps · Cloud Computing · Architecture · Tutorials
-
-## Author
-
-**Jean Paul Elisa NIYOKWIZERWA** — [GitHub](https://github.com/Ndevu12) · [ndevuspace.com](https://www.ndevuspace.com) · [ndevulion@gmail.com](mailto:ndevulion@gmail.com)
 
 ## License
 

@@ -1,12 +1,12 @@
-import { getEnv } from "./envConfig";
+import { readRequiredClientEnv } from "./env";
 
 // API configuration constants
 
 export const API_BASE_URL =
-  getEnv("NEXT_PUBLIC_API_BASE_URL", "https://my-brand-backend-apis.onrender.com/v1");
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://my-brand-backend-apis.onrender.com/v1";
 
 export const SITE_URL =
-  getEnv("NEXT_PUBLIC_SITE_URL", "https://blog.ndevuspace.com");
+  readRequiredClientEnv("NEXT_PUBLIC_SITE_URL", { NEXT_PUBLIC_SITE_URL: "https://blog.ndevuspace.com" });
 
 // Portfolio site link (for "back to portfolio" nav)
 export const PORTFOLIO_URL = "https://www.ndevuspace.com";
@@ -19,7 +19,7 @@ export const DEFAULT_PAGE = 1;
 export const SOCIAL_LINKS = {
   linkedin: "https://www.linkedin.com/in/jean-paul-elisa",
   github: "https://github.com/Ndevu12",
-  email: "ndevulion@gmail.com",
+  email: "hello@ndevuspace.com",
 } as const;
 
 // Default author info

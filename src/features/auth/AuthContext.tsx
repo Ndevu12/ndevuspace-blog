@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { authService } from "@/services/authService";
-import { IS_USE_DUMMY_DATA_ENABLED } from "@/lib/envConfig";
+import { createClient } from "@/lib/supabase/client";
 import type { AuthState, LoginCredentials, User } from "@/types/auth";
 
 // ─── Context Type ───
@@ -31,13 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthenticated = !!user;
 
-  // Check auth state on mount (skip in dummy data mode — no real backend)
+  // Resolve initial user and keep auth state synced with Supabase session events.
   useEffect(() => {
-    if (IS_USE_DUMMY_DATA_ENABLED) {
-      setIsLoading(false);
-      return;
-    }
-
+    const supabase = createClient();
     let cancelled = false;
 
     async function checkAuth() {
@@ -51,9 +47,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    checkAuth();
+    void checkAuth();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (cancelled) return;
+
+      if (!session?.user) {
+        setUser(null);
+        return;
+      }
+
+      const currentUser = await authService.getCurrentUser();
+      if (!cancelled) setUser(currentUser);
+    });
+
     return () => {
       cancelled = true;
+      subscription.unsubscribe();
     };
   }, []);
 
