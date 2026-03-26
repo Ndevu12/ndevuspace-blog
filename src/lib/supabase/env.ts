@@ -1,9 +1,8 @@
-import { readRequiredClientEnv, readServerEnv, type EnvSource } from "@/lib/env";
+import { readRequiredClientEnv, type EnvSource } from "@/lib/env";
 
 export type SupabaseEnvConfig = {
   url: string;
   anonKey: string;
-  serviceRoleKey?: string;
 };
 
 export const getSupabaseEnvConfig = (): SupabaseEnvConfig => {
@@ -18,7 +17,6 @@ export const getSupabaseEnvConfig = (): SupabaseEnvConfig => {
   return {
     url: readRequiredClientEnv("NEXT_PUBLIC_SUPABASE_URL", clientEnv),
     anonKey: readRequiredClientEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", clientEnv),
-    serviceRoleKey: readServerEnv("SUPABASE_SERVICE_ROLE_KEY", serverEnv),
   };
 };
 
