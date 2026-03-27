@@ -18,7 +18,7 @@ function getAuthErrorMessage(error: string | null): string {
 
 function mapSupabaseUser(user: SupabaseUser): User {
   return {
-    _id: user.id,
+    id: user.id,
     username: user.email ?? "",
     email: user.email ?? "",
     firstName: "",

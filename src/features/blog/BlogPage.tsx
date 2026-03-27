@@ -323,7 +323,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {filteredPosts.map((post) => (
-                          <BlogCard key={post._id} post={post} />
+                          <BlogCard key={post.id} post={post} />
                         ))}
                       </div>
                     )}

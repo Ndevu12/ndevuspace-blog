@@ -70,7 +70,7 @@ export function BlogDetailPage({ post }: BlogDetailPageProps) {
 
   const handleLike = async () => {
     try {
-      await toggleLike(post._id);
+      await toggleLike(post.id);
       if (!liked) {
         toast.success("Article liked!");
       }
@@ -245,7 +245,7 @@ export function BlogDetailPage({ post }: BlogDetailPageProps) {
             {/* <section className="mt-12 space-y-8">
               <CommentList comments={comments} />
               <CommentForm
-                blogId={post._id}
+                blogId={post.id}
                 onCommentAdded={addComment}
               />
             </section> */}
@@ -257,7 +257,7 @@ export function BlogDetailPage({ post }: BlogDetailPageProps) {
                 <div className="grid md:grid-cols-3 gap-6">
                   {relatedPosts.map((relatedPost) => (
                     <Link
-                      key={relatedPost._id || relatedPost.id}
+                      key={relatedPost.id}
                       href={`/blog/${relatedPost.slug}`}
                     >
                       <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full">

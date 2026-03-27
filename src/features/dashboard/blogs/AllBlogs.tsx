@@ -132,7 +132,7 @@ export function AllBlogs() {
             Manage your blog posts ({pagination.totalBlogs} total)
           </p>
         </div>
-        <Button render={<Link href="/dashboard/blogs/new" />}>
+        <Button nativeButton={false} render={<Link href="/dashboard/blogs/new" />}>
           <Plus className="mr-2 h-4 w-4" />
           New Blog
         </Button>
@@ -167,9 +167,13 @@ export function AllBlogs() {
             value={filters.status || "all"}
             onValueChange={(v) => {
               const val = String(v ?? "");
+              const nextStatus =
+                val === "all"
+                  ? ""
+                  : (val as BlogAdminFilters["status"]);
               setFilters((prev) => ({
                 ...prev,
-                status: val === "all" ? "" : val,
+                status: nextStatus,
                 page: 1,
               }));
             }}
@@ -286,7 +290,7 @@ export function AllBlogs() {
               </TableRow>
             ) : (
               blogs.map((blog) => (
-                <TableRow key={blog._id}>
+                <TableRow key={blog.id}>
                   <TableCell>
                     <div>
                       <p className="font-medium truncate max-w-[300px]">
@@ -326,7 +330,7 @@ export function AllBlogs() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() =>
-                            router.push(`/dashboard/blogs/${blog._id}`)
+                            router.push(`/dashboard/blogs/${blog.id}`)
                           }
                         >
                           <Eye className="mr-2 h-4 w-4" />
@@ -335,7 +339,7 @@ export function AllBlogs() {
                         <DropdownMenuItem
                           onClick={() =>
                             router.push(
-                              `/dashboard/blogs/${blog._id}/edit`
+                              `/dashboard/blogs/${blog.id}/edit`
                             )
                           }
                         >
@@ -366,7 +370,9 @@ export function AllBlogs() {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDelete(blog._id)}
+                                onClick={() => {
+                                  handleDelete(blog.id);
+                                }}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
                                 {isPending ? (

@@ -59,7 +59,7 @@ export const useCategoryManagerStore = create<CategoryManagerState>(
     saveCategory: async (data) => {
       const { editingCategory } = get();
       if (editingCategory) {
-        await updateCategory(editingCategory._id, data);
+        await updateCategory(editingCategory.id, data);
       } else {
         await createCategory(data);
       }

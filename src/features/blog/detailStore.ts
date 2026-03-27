@@ -72,7 +72,7 @@ export const useBlogDetailStore = create<BlogDetailState & BlogDetailActions>(
 
       set({
         currentUrl: url,
-        liked: likedPosts.includes(post._id),
+        liked: likedPosts.includes(post.id),
         likeCount: post.likes || 0,
         comments: post.comments && Array.isArray(post.comments) ? post.comments : [],
       });
@@ -93,8 +93,8 @@ export const useBlogDetailStore = create<BlogDetailState & BlogDetailActions>(
         );
 
         let relatedPosts: BlogPost[] = [];
-        if (post.category?._id) {
-          const categoryPosts = await getBlogsByCategory(post.category._id, 1, 6);
+        if (post.category?.id) {
+          const categoryPosts = await getBlogsByCategory(post.category.id, 1, 6);
           relatedPosts = categoryPosts.blogs
             .filter((p) => p.slug !== post.slug)
             .slice(0, 3);

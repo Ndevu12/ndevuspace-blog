@@ -1,29 +1,95 @@
-// Category service (non-dummy mode is intentionally unimplemented).
-// This project should not query real data unless explicitly requested.
-
+import { createClient } from "@/lib/supabase/client";
 import type { BlogCategory } from "@/types/blog";
 
-function notImplemented(name: string): never {
-  throw new Error(`${name} is not implemented (dummy mode only).`);
-}
-
 export async function getAllCategories(): Promise<BlogCategory[]> {
-  return notImplemented("getAllCategories");
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("blog_category_admin_list", {
+    p_include_counts: false,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Failed to fetch categories.");
+  }
+
+  if (!data || typeof data !== "object" || !("categories" in data)) {
+    return [];
+  }
+
+  const { categories } = data as { categories?: BlogCategory[] };
+  return Array.isArray(categories) ? categories : [];
 }
 
-export async function getCategoryById(_id: string): Promise<BlogCategory | null> {
-  return notImplemented("getCategoryById");
+export async function getCategoryById(id: string): Promise<BlogCategory | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("blog_category_admin_get", {
+    p_category_id: id,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Failed to fetch category.");
+  }
+
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  return data as BlogCategory;
 }
 
-export async function createCategory(_categoryData: { name: string; icon: string }): Promise<BlogCategory | null> {
-  return notImplemented("createCategory");
+export async function createCategory(categoryData: { name: string; icon: string }): Promise<BlogCategory | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("blog_category_admin_create", {
+    p_name: categoryData.name,
+    p_slug: null,
+    p_description: null,
+    p_icon: categoryData.icon,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Failed to create category.");
+  }
+
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  return data as BlogCategory;
 }
 
-export async function updateCategory(_id: string, _categoryData: { name: string; icon: string }): Promise<BlogCategory | null> {
-  return notImplemented("updateCategory");
+export async function updateCategory(id: string, categoryData: { name: string; icon: string }): Promise<BlogCategory | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("blog_category_admin_update", {
+    p_category_id: id,
+    p_name: categoryData.name,
+    p_slug: null,
+    p_description: null,
+    p_icon: categoryData.icon,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Failed to update category.");
+  }
+
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  return data as BlogCategory;
 }
 
-export async function deleteCategory(_id: string): Promise<boolean> {
-  return notImplemented("deleteCategory");
-}
+export async function deleteCategory(id: string): Promise<boolean> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("blog_category_admin_delete", {
+    p_category_id: id,
+  });
 
+  if (error) {
+    throw new Error(error.message || "Failed to delete category.");
+  }
+
+  if (!data || typeof data !== "object" || !("ok" in data)) {
+    return false;
+  }
+
+  return Boolean((data as { ok?: boolean }).ok);
+}

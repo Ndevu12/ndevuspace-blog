@@ -87,7 +87,7 @@ export function CommentList({ comments, isLoading = false }: CommentListProps) {
       <CardContent>
         <div className="space-y-6">
           {comments.map((comment, index) => (
-            <div key={comment._id}>
+            <div key={comment.id}>
               <div className="flex items-start gap-4">
                 <Avatar>
                   <AvatarFallback className="bg-gradient-to-r from-primary to-purple-600 text-white text-sm">

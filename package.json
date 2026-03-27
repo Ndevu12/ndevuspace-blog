@@ -7,7 +7,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:local:start": "npx supabase start 2>&1",
+    "db:local:stop": "npx supabase stop 2>&1",
+    "db:local:restart": "npx supabase restart 2>&1",
+    "db:local:status": "npx supabase status 2>&1",
+    "db:local:seed": "psql \"postgresql://postgres:postgres@127.0.0.1:54322/postgres\" -v ON_ERROR_STOP=1 -f supabase/seed.sql 2>&1",
+    "db:local:push": "npx supabase db push 2>&1",
+    "db:local:diff": "npx supabase db diff 2>&1",
+    "db:local:migrate": "npx supabase migration list 2>&1",
+    "db:local:reset": "npx supabase db reset --no-seed 2>&1",
+    "db:verify:rbac-e2e": "npx supabase db reset --no-seed 2>&1 && psql \"postgresql://postgres:postgres@127.0.0.1:54322/postgres\" -v ON_ERROR_STOP=1 -f supabase/verify/verify_rbac_e2e.sql 2>&1"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

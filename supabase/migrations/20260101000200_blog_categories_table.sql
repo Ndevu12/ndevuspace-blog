@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.blog_categories (
   name text NOT NULL,
   slug text NOT NULL,
   description text,
+  icon text NOT NULL DEFAULT 'tag',
   created_at timestamptz NOT NULL DEFAULT timezone('utc', now()),
   updated_at timestamptz NOT NULL DEFAULT timezone('utc', now())
 );
@@ -61,3 +62,6 @@ COMMENT ON COLUMN public.blog_categories.name IS
 
 COMMENT ON COLUMN public.blog_categories.slug IS
   'URL-safe stable identifier for category pages.';
+
+COMMENT ON COLUMN public.blog_categories.icon IS
+  'Display icon key for the category (e.g. Lucide name). Default ''tag'' matches dashboard create-form default.';

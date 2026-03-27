@@ -6,7 +6,7 @@ import type { BlogPost, BlogCategory, BlogComment, Author } from "@/types/blog";
 // ─── Shared Entities ───
 
 const defaultAuthor: Author = {
-  _id: "author-1",
+  id: "author-1",
   user: "user-1",
   firstName: "Jean Paul Elisa",
   lastName: "NIYOKWIZERWA",
@@ -17,24 +17,38 @@ const defaultAuthor: Author = {
 // ─── Categories ───
 // Single source of truth — imported by dummyBlogService.ts as `dummyCategories`
 
-export const dummyCategories: BlogCategory[] = [
-  { _id: "cat-webdev", name: "Web Development", icon: "code" },
-  { _id: "cat-design", name: "Design", icon: "palette" },
-  { _id: "cat-tech", name: "Technology", icon: "cpu" },
-  { _id: "cat-devops", name: "DevOps", icon: "server" },
-  { _id: "cat-cloud", name: "Cloud Computing", icon: "cloud" },
-  { _id: "cat-architecture", name: "Architecture", icon: "sitemap" },
-  { _id: "cat-tutorials", name: "Tutorials", icon: "graduation-cap" },
+const rawDummyCategories = [
+  { id: "cat-webdev", name: "Web Development", icon: "code" },
+  { id: "cat-design", name: "Design", icon: "palette" },
+  { id: "cat-tech", name: "Technology", icon: "cpu" },
+  { id: "cat-devops", name: "DevOps", icon: "server" },
+  { id: "cat-cloud", name: "Cloud Computing", icon: "cloud" },
+  { id: "cat-architecture", name: "Architecture", icon: "sitemap" },
+  { id: "cat-tutorials", name: "Tutorials", icon: "graduation-cap" },
 ];
 
+export const dummyCategories: BlogCategory[] = rawDummyCategories.map((category) => ({
+  ...category,
+  id: category.id,
+}));
+
 // Helper to look up a category by id (guaranteed to exist at init time)
-const cat = (id: string) => dummyCategories.find((c) => c._id === id)!;
+const cat = (id: string) => dummyCategories.find((c) => c.id === id)!;
 
 // ─── Comments Pool ───
 
-const commentsForBlog1: BlogComment[] = [
+function normalizeComments(
+  comments: Array<BlogComment>
+): BlogComment[] {
+  return comments.map((comment) => ({
+    ...comment,
+    id: comment.id,
+  }));
+}
+
+const commentsForBlog1 = normalizeComments([
   {
-    _id: "cmt-1",
+    id: "cmt-1",
     blogId: "blog-1",
     content:
       "Great breakdown of the architectural trade-offs. We migrated from a monolith to microservices last year and this captures the journey perfectly.",
@@ -43,7 +57,7 @@ const commentsForBlog1: BlogComment[] = [
     createdAt: "2026-02-20T14:30:00Z",
   },
   {
-    _id: "cmt-2",
+    id: "cmt-2",
     blogId: "blog-1",
     content:
       "The hybrid approach section is spot on. We use serverless for event processing but keep core services in containers. Best of both worlds.",
@@ -51,7 +65,7 @@ const commentsForBlog1: BlogComment[] = [
     createdAt: "2026-02-22T09:15:00Z",
   },
   {
-    _id: "cmt-3",
+    id: "cmt-3",
     blogId: "blog-1",
     content:
       "I'd love to see a follow-up on how you handle data consistency across microservices. That's been our biggest challenge.",
@@ -59,11 +73,11 @@ const commentsForBlog1: BlogComment[] = [
     email: "sarah.chen@example.com",
     createdAt: "2026-02-25T16:45:00Z",
   },
-];
+]);
 
-const commentsForBlog3: BlogComment[] = [
+const commentsForBlog3 = normalizeComments([
   {
-    _id: "cmt-4",
+    id: "cmt-4",
     blogId: "blog-3",
     content:
       "The section on visual hierarchy was eye-opening. As a backend dev, I never thought about these principles but they make so much sense.",
@@ -72,18 +86,18 @@ const commentsForBlog3: BlogComment[] = [
     createdAt: "2026-01-18T11:20:00Z",
   },
   {
-    _id: "cmt-5",
+    id: "cmt-5",
     blogId: "blog-3",
     content:
       "Accessibility should be the first thing we think about, not an afterthought. Great that you highlighted it so prominently.",
     name: "Leila Umutoni",
     createdAt: "2026-01-20T08:45:00Z",
   },
-];
+]);
 
-const commentsForBlog4: BlogComment[] = [
+const commentsForBlog4 = normalizeComments([
   {
-    _id: "cmt-6",
+    id: "cmt-6",
     blogId: "blog-4",
     content:
       "The ethical considerations section is crucial. Too many AI articles skip this entirely. Thanks for including it.",
@@ -92,7 +106,7 @@ const commentsForBlog4: BlogComment[] = [
     createdAt: "2026-02-02T13:10:00Z",
   },
   {
-    _id: "cmt-7",
+    id: "cmt-7",
     blogId: "blog-4",
     content:
       "I've been using GitHub Copilot for 8 months and it's genuinely changed how I work. The productivity boost is real.",
@@ -100,7 +114,7 @@ const commentsForBlog4: BlogComment[] = [
     createdAt: "2026-02-05T17:30:00Z",
   },
   {
-    _id: "cmt-8",
+    id: "cmt-8",
     blogId: "blog-4",
     content:
       "Great article! But I think we also need to discuss AI's impact on junior developer learning curves.",
@@ -108,11 +122,11 @@ const commentsForBlog4: BlogComment[] = [
     email: "p.nshuti@example.com",
     createdAt: "2026-02-08T10:00:00Z",
   },
-];
+]);
 
-const commentsForBlog6: BlogComment[] = [
+const commentsForBlog6 = normalizeComments([
   {
-    _id: "cmt-9",
+    id: "cmt-9",
     blogId: "blog-6",
     content:
       "Strict mode and discriminated unions are game-changers. I wish I'd enabled strict: true from the start on our project.",
@@ -121,18 +135,18 @@ const commentsForBlog6: BlogComment[] = [
     createdAt: "2026-03-02T09:20:00Z",
   },
   {
-    _id: "cmt-10",
+    id: "cmt-10",
     blogId: "blog-6",
     content:
       "The Zod section is exactly what I needed. We've been struggling with runtime validation at API boundaries.",
     name: "James Mugisha",
     createdAt: "2026-03-04T14:50:00Z",
   },
-];
+]);
 
-const commentsForBlog7: BlogComment[] = [
+const commentsForBlog7 = normalizeComments([
   {
-    _id: "cmt-11",
+    id: "cmt-11",
     blogId: "blog-7",
     content:
       "This is the clearest Docker introduction I've read. The Dockerfile example is production-ready, which isn't common in tutorial content.",
@@ -140,11 +154,11 @@ const commentsForBlog7: BlogComment[] = [
     email: "diane.u@example.com",
     createdAt: "2026-01-12T11:30:00Z",
   },
-];
+]);
 
-const commentsForBlog11: BlogComment[] = [
+const commentsForBlog11 = normalizeComments([
   {
-    _id: "cmt-12",
+    id: "cmt-12",
     blogId: "blog-11",
     content:
       "We set up GitHub Actions following this exact pattern and it saved us from deploying a broken build on day one. CI/CD is non-negotiable.",
@@ -153,21 +167,21 @@ const commentsForBlog11: BlogComment[] = [
     createdAt: "2026-03-06T15:40:00Z",
   },
   {
-    _id: "cmt-13",
+    id: "cmt-13",
     blogId: "blog-11",
     content:
       "Great practical guide! Any recommendations for handling secrets and environment variables in CI pipelines?",
     name: "Claudine Mukamana",
     createdAt: "2026-03-08T08:15:00Z",
   },
-];
+]);
 
 // ─── Blog Posts ───
 
-export const dummyBlogs: BlogPost[] = [
+const rawDummyBlogs: Array<BlogPost> = [
   // ── 1. Architecture ─────────────────────────────────────────────────
   {
-    _id: "blog-1",
+    id: "blog-1",
     slug: "modern-web-architecture-evolution",
     title: "The Evolution of Modern Web Architecture",
     description:
@@ -233,7 +247,7 @@ export const dummyBlogs: BlogPost[] = [
 
   // ── 2. Responsive Design ───────────────────────────────────────────
   {
-    _id: "blog-2",
+    id: "blog-2",
     slug: "responsive-design-principles-2026",
     title: "Responsive Web Design Principles for 2026",
     description:
@@ -285,7 +299,7 @@ export const dummyBlogs: BlogPost[] = [
 
   // ── 3. UI/UX Design ────────────────────────────────────────────────
   {
-    _id: "blog-3",
+    id: "blog-3",
     slug: "ui-ux-design-fundamentals-developers",
     title: "UI/UX Design Fundamentals for Developers",
     description:
@@ -335,7 +349,7 @@ export const dummyBlogs: BlogPost[] = [
 
   // ── 4. AI in Tech ──────────────────────────────────────────────────
   {
-    _id: "blog-4",
+    id: "blog-4",
     slug: "future-of-ai-in-tech-2026",
     title: "The Future of AI in Tech: What Developers Need to Know",
     description:
@@ -375,7 +389,7 @@ export const dummyBlogs: BlogPost[] = [
 
   // ── 5. Startup Guide ───────────────────────────────────────────────
   {
-    _id: "blog-5",
+    id: "blog-5",
     slug: "starting-your-tech-startup-practical-guide",
     title: "Starting Your Tech Startup: A Practical Guide",
     description:
@@ -416,7 +430,7 @@ export const dummyBlogs: BlogPost[] = [
 
   // ── 6. TypeScript Best Practices ───────────────────────────────────
   {
-    _id: "blog-6",
+    id: "blog-6",
     slug: "typescript-best-practices-2026",
     title: "TypeScript Best Practices for Production Apps",
     description:
@@ -471,7 +485,7 @@ function handle(result: Result&lt;User&gt;) {
 
   // ── 7. Docker & Kubernetes ─────────────────────────────────────────
   {
-    _id: "blog-7",
+    id: "blog-7",
     slug: "docker-kubernetes-developers-guide",
     title: "Docker & Kubernetes for Developers",
     description:
@@ -516,7 +530,7 @@ CMD ["yarn", "start"]</code></pre>
 
   // ── 8. Functional Programming ──────────────────────────────────────
   {
-    _id: "blog-8",
+    id: "blog-8",
     slug: "functional-programming-javascript",
     title: "Functional Programming in JavaScript",
     description:
@@ -566,7 +580,7 @@ const processUser = pipe(
 
   // ── 9. Cloud-Native Development ────────────────────────────────────
   {
-    _id: "blog-9",
+    id: "blog-9",
     slug: "cloud-native-development-2026",
     title: "Cloud-Native Development: Building for the Modern Stack",
     description:
@@ -608,7 +622,7 @@ const processUser = pipe(
 
   // ── 10. Teaching Coding ────────────────────────────────────────────
   {
-    _id: "blog-10",
+    id: "blog-10",
     slug: "teaching-coding-to-autistic-kids",
     title: "Teaching Coding to Autistic Kids",
     description:
@@ -648,7 +662,7 @@ const processUser = pipe(
 
   // ── 11. CI/CD Pipelines ────────────────────────────────────────────
   {
-    _id: "blog-11",
+    id: "blog-11",
     slug: "getting-started-with-ci-cd-pipelines",
     title: "Getting Started with CI/CD Pipelines",
     description:
@@ -703,7 +717,7 @@ jobs:
 
   // ── 12. Career Growth ──────────────────────────────────────────────
   {
-    _id: "blog-12",
+    id: "blog-12",
     slug: "career-growth-junior-to-senior-developer",
     title: "Career Growth: From Junior to Senior Developer",
     description:
@@ -757,7 +771,7 @@ jobs:
 
   // ── 13. Next.js App Router ─────────────────────────────────────────
   {
-    _id: "blog-13",
+    id: "blog-13",
     slug: "next-js-app-router-deep-dive",
     title: "Next.js App Router: A Deep Dive",
     description:
@@ -816,7 +830,7 @@ jobs:
 
   // ── 14. Building Scalable APIs ─────────────────────────────────────
   {
-    _id: "blog-14",
+    id: "blog-14",
     slug: "building-scalable-apis-node-express",
     title: "Building Scalable APIs with Node.js and Express",
     description:
@@ -873,7 +887,7 @@ app.use((err, req, res, next) => {
 
   // ── 15. Modern CSS ─────────────────────────────────────────────────
   {
-    _id: "blog-15",
+    id: "blog-15",
     slug: "modern-css-techniques-grid-flexbox",
     title: "Modern CSS Techniques: Grid, Flexbox, and Beyond",
     description:
@@ -923,3 +937,22 @@ app.use((err, req, res, next) => {
     status: "published",
   },
 ];
+
+export const dummyBlogs: BlogPost[] = rawDummyBlogs.map((blog) => ({
+  ...blog,
+  id: blog.id,
+  author: {
+    ...blog.author,
+    id: blog.author.id,
+  },
+  category: blog.category
+    ? {
+        ...blog.category,
+        id: blog.category.id,
+      }
+    : undefined,
+  comments: blog.comments?.map((comment) => ({
+    ...comment,
+    id: comment.id,
+  })),
+}));

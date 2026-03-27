@@ -1,5 +1,5 @@
 -- =============================================================================
--- Migration: 20260101000402_blogs_triggers.sql
+-- Migration: 20260101000406_blogs_triggers.sql
 -- Domain: BLOGS
 -- Type: Triggers
 -- Purpose: Keep updated_at fresh on blog updates

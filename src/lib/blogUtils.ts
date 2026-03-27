@@ -63,8 +63,8 @@ export function formatRelativeDate(dateString: string): string {
 }
 
 /**
- * Get the blog post ID (handles both _id and id fields)
+ * Get the blog post ID
  */
 export function getBlogId(post: BlogPost): string {
-  return post._id || post.id || "";
+  return post.id || "";
 }
