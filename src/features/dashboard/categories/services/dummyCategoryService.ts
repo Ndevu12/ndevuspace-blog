@@ -8,6 +8,6 @@ export async function getAllCategories(): Promise<BlogCategory[]> {
 }
 
 export async function getCategoryById(id: string): Promise<BlogCategory | null> {
-  return dummyCategories.find((c) => c._id === id) ?? null;
+  return dummyCategories.find((c) => c.id === id || c._id === id) ?? null;
 }
 

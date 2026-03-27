@@ -132,7 +132,7 @@ export function AllBlogs() {
             Manage your blog posts ({pagination.totalBlogs} total)
           </p>
         </div>
-        <Button render={<Link href="/dashboard/blogs/new" />}>
+        <Button nativeButton={false} render={<Link href="/dashboard/blogs/new" />}>
           <Plus className="mr-2 h-4 w-4" />
           New Blog
         </Button>
@@ -167,9 +167,13 @@ export function AllBlogs() {
             value={filters.status || "all"}
             onValueChange={(v) => {
               const val = String(v ?? "");
+              const nextStatus =
+                val === "all"
+                  ? ""
+                  : (val as BlogAdminFilters["status"]);
               setFilters((prev) => ({
                 ...prev,
-                status: val === "all" ? "" : val,
+                status: nextStatus,
                 page: 1,
               }));
             }}
@@ -366,7 +370,11 @@ export function AllBlogs() {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDelete(blog._id)}
+                                onClick={() => {
+                                  const blogId = blog._id ?? blog.id;
+                                  if (!blogId) return;
+                                  handleDelete(blogId);
+                                }}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
                                 {isPending ? (

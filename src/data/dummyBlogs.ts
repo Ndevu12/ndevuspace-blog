@@ -6,6 +6,7 @@ import type { BlogPost, BlogCategory, BlogComment, Author } from "@/types/blog";
 // ─── Shared Entities ───
 
 const defaultAuthor: Author = {
+  id: "author-1",
   _id: "author-1",
   user: "user-1",
   firstName: "Jean Paul Elisa",
@@ -17,7 +18,7 @@ const defaultAuthor: Author = {
 // ─── Categories ───
 // Single source of truth — imported by dummyBlogService.ts as `dummyCategories`
 
-export const dummyCategories: BlogCategory[] = [
+const rawDummyCategories = [
   { _id: "cat-webdev", name: "Web Development", icon: "code" },
   { _id: "cat-design", name: "Design", icon: "palette" },
   { _id: "cat-tech", name: "Technology", icon: "cpu" },
@@ -27,12 +28,26 @@ export const dummyCategories: BlogCategory[] = [
   { _id: "cat-tutorials", name: "Tutorials", icon: "graduation-cap" },
 ];
 
+export const dummyCategories: BlogCategory[] = rawDummyCategories.map((category) => ({
+  ...category,
+  id: category._id,
+}));
+
 // Helper to look up a category by id (guaranteed to exist at init time)
-const cat = (id: string) => dummyCategories.find((c) => c._id === id)!;
+const cat = (id: string) => dummyCategories.find((c) => c.id === id || c._id === id)!;
 
 // ─── Comments Pool ───
 
-const commentsForBlog1: BlogComment[] = [
+function normalizeComments(
+  comments: Array<Omit<BlogComment, "id"> & { _id: string }>
+): BlogComment[] {
+  return comments.map((comment) => ({
+    ...comment,
+    id: comment._id,
+  }));
+}
+
+const commentsForBlog1 = normalizeComments([
   {
     _id: "cmt-1",
     blogId: "blog-1",
@@ -59,9 +74,9 @@ const commentsForBlog1: BlogComment[] = [
     email: "sarah.chen@example.com",
     createdAt: "2026-02-25T16:45:00Z",
   },
-];
+]);
 
-const commentsForBlog3: BlogComment[] = [
+const commentsForBlog3 = normalizeComments([
   {
     _id: "cmt-4",
     blogId: "blog-3",
@@ -79,9 +94,9 @@ const commentsForBlog3: BlogComment[] = [
     name: "Leila Umutoni",
     createdAt: "2026-01-20T08:45:00Z",
   },
-];
+]);
 
-const commentsForBlog4: BlogComment[] = [
+const commentsForBlog4 = normalizeComments([
   {
     _id: "cmt-6",
     blogId: "blog-4",
@@ -108,9 +123,9 @@ const commentsForBlog4: BlogComment[] = [
     email: "p.nshuti@example.com",
     createdAt: "2026-02-08T10:00:00Z",
   },
-];
+]);
 
-const commentsForBlog6: BlogComment[] = [
+const commentsForBlog6 = normalizeComments([
   {
     _id: "cmt-9",
     blogId: "blog-6",
@@ -128,9 +143,9 @@ const commentsForBlog6: BlogComment[] = [
     name: "James Mugisha",
     createdAt: "2026-03-04T14:50:00Z",
   },
-];
+]);
 
-const commentsForBlog7: BlogComment[] = [
+const commentsForBlog7 = normalizeComments([
   {
     _id: "cmt-11",
     blogId: "blog-7",
@@ -140,9 +155,9 @@ const commentsForBlog7: BlogComment[] = [
     email: "diane.u@example.com",
     createdAt: "2026-01-12T11:30:00Z",
   },
-];
+]);
 
-const commentsForBlog11: BlogComment[] = [
+const commentsForBlog11 = normalizeComments([
   {
     _id: "cmt-12",
     blogId: "blog-11",
@@ -160,11 +175,11 @@ const commentsForBlog11: BlogComment[] = [
     name: "Claudine Mukamana",
     createdAt: "2026-03-08T08:15:00Z",
   },
-];
+]);
 
 // ─── Blog Posts ───
 
-export const dummyBlogs: BlogPost[] = [
+const rawDummyBlogs: Array<Omit<BlogPost, "id"> & { _id: string }> = [
   // ── 1. Architecture ─────────────────────────────────────────────────
   {
     _id: "blog-1",
@@ -923,3 +938,22 @@ app.use((err, req, res, next) => {
     status: "published",
   },
 ];
+
+export const dummyBlogs: BlogPost[] = rawDummyBlogs.map((blog) => ({
+  ...blog,
+  id: blog._id,
+  author: {
+    ...blog.author,
+    id: blog.author.id ?? blog.author._id,
+  },
+  category: blog.category
+    ? {
+        ...blog.category,
+        id: blog.category.id ?? blog.category._id,
+      }
+    : undefined,
+  comments: blog.comments?.map((comment) => ({
+    ...comment,
+    id: comment.id ?? comment._id,
+  })),
+}));

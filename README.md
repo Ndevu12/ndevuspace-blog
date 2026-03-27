@@ -74,6 +74,17 @@ NEXT_PUBLIC_USE_DUMMY_DATA=false →  blogService (real API)
 
 Write operations (admin) always go through the real API.
 
+## Supabase migrations and RPC policy
+
+- **Pre-production:** Prefer **editing existing migration files** under `supabase/migrations/` when changing schema, RLS, helpers, or RPCs, instead of stacking many small fix migrations.
+- **After local rewrites:** Run **`supabase db reset`** so your database matches the updated migration chain.
+- **Post-production:** Once history is irreversible, use **append-only** new migrations only; do not rewrite old files.
+- **RPC exposure:** Grant `EXECUTE` on **user-facing** RPCs to clients as needed; **SQL helpers** should not be exposed via PostgREST to `anon` / `authenticated` (revoke helper execution from client roles).
+- **Codebase:** Use **canonical** service and type paths only—no permanent `*V2` or parallel RPC-only service modules.
+- **Repo hygiene:** Remove orphaned/replaced blog modules in the same change where call sites move, and keep docs aligned with the canonical paths and migration policy.
+
+Details: [docs/MIGRATIONS.md](docs/MIGRATIONS.md).
+
 ## Getting Started
 
 ### Prerequisites

@@ -91,3 +91,12 @@ src/features/auth/
 - `import { useAuthStore } from "@/features/auth/store/authStore";` from unrelated app code if the feature intends `useAuth` to be the public API.
 - Putting Supabase/API calls directly in components when a `services/` file exists for that concern.
 
+### Related: database and services policy
+
+Schema and RPC changes follow the repo’s migration conventions (in-place edits pre-production, append-only after production, helper functions not client-exposed). Service implementations stay in the canonical `*Service.ts` files for each feature—no permanent duplicate `V2` or RPC-only modules. See [MIGRATIONS.md](MIGRATIONS.md).
+
+### Cleanup guardrails
+
+- Keep feature modules clean during refactors: delete replaced files once imports are moved, rather than leaving orphaned blog/category service variants behind.
+- Keep docs current when canonical file paths or data-layer rules change, especially for RPC-only access and migration editing policy.
+
