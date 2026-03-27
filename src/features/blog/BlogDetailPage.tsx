@@ -210,7 +210,10 @@ export function BlogDetailPage({ post }: BlogDetailPageProps) {
             <Card>
               <CardContent className="p-8">
                 {/* Article Body */}
-                <div className="prose-blog prose prose-lg dark:prose-invert max-w-none">
+                <div
+                  className="prose-blog prose prose-lg dark:prose-invert max-w-none"
+                  data-article-content
+                >
                   {post.content ? (
                     <div dangerouslySetInnerHTML={{ __html: post.content }} />
                   ) : (
@@ -296,12 +299,6 @@ export function BlogDetailPage({ post }: BlogDetailPageProps) {
 
           {/* Right Sidebar */}
           <aside className="lg:w-1/5 space-y-8">
-            {/* Share for mobile */}
-            <div className="lg:hidden">
-              {currentUrl && (
-                <ShareArticle title={post.title} url={currentUrl} />
-              )}
-            </div>
 
             <BlogSidebar
               popularPosts={popularPosts}
