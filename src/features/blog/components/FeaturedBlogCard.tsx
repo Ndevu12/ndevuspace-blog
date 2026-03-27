@@ -3,7 +3,7 @@
 import { BlogPost } from "@/types/blog";
 import Image from "next/image";
 import Link from "next/link";
-import { getAuthorName, getAuthorImage } from "@/lib/blogUtils";
+import { getAuthorName, getAuthorImage, getSafeImageSrc } from "@/lib/blogUtils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -30,6 +30,7 @@ export function FeaturedBlogCard({ post }: FeaturedBlogCardProps) {
 
   const authorName = getAuthorName(post.author);
   const categoryName = getCategoryName(post.category);
+  const imageSrc = getSafeImageSrc(post.imageUrl, "/images/blog/placeholder.jpg");
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -54,7 +55,7 @@ export function FeaturedBlogCard({ post }: FeaturedBlogCardProps) {
         <div className="relative">
           <div className="relative w-full h-64 md:h-80 overflow-hidden">
             <Image
-              src={post.imageUrl || "/images/blog/placeholder.jpg"}
+              src={imageSrc}
               alt={post.title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

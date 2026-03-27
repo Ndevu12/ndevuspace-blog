@@ -3,6 +3,7 @@
 import { BlogPost } from "@/types/blog";
 import Image from "next/image";
 import Link from "next/link";
+import { getSafeImageSrc } from "@/lib/blogUtils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -34,7 +35,7 @@ export function BlogSidebar({
             <div key={post.id} className="flex gap-3 group">
               <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden">
                 <Image
-                  src={post.imageUrl || "/images/blog/placeholder.jpg"}
+                  src={getSafeImageSrc(post.imageUrl, "/images/blog/placeholder.jpg")}
                   alt={post.title}
                   fill
                   sizes="64px"

@@ -41,6 +41,35 @@ export function getAuthorImage(post: BlogPost | null | undefined): string {
 }
 
 /**
+ * Return a safe image src for next/image.
+ * Accepts root-relative paths and absolute http(s) URLs only.
+ */
+export function getSafeImageSrc(
+  imageUrl: string | null | undefined,
+  fallback: string
+): string {
+  if (!imageUrl) return fallback;
+
+  const trimmed = imageUrl.trim();
+  if (!trimmed) return fallback;
+
+  if (trimmed.startsWith("/")) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return trimmed;
+    }
+  } catch {
+    return fallback;
+  }
+
+  return fallback;
+}
+
+/**
  * Format a date string for display (e.g., "Jan 15, 2025")
  */
 export function formatDate(dateString: string): string {

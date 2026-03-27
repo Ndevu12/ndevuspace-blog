@@ -349,6 +349,7 @@ export function AllBlogs() {
                         <DropdownMenuSeparator />
                         <AlertDialog>
                           <AlertDialogTrigger
+                            nativeButton={false}
                             render={
                               <DropdownMenuItem
                                 onSelect={(e) => e.preventDefault()}
