@@ -168,6 +168,17 @@ export interface BlogDashboardTimeseriesResponse {
   points: BlogDashboardTimeseriesPoint[];
 }
 
+/** One category row from `blog_dashboard_category_distribution` response `categories`. */
+export interface BlogDashboardCategoryDistributionItem {
+  category: string;
+  posts: number;
+}
+
+/** JSON returned by `public.blog_dashboard_category_distribution()`. */
+export interface BlogDashboardCategoryDistributionResponse {
+  categories: BlogDashboardCategoryDistributionItem[];
+}
+
 // ─── Component Props ───
 
 export interface BlogAdminTableProps {
