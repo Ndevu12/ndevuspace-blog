@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,19 +40,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { useCategories, useTagInput } from "@/hooks";
 import { dashboardBlogService } from "@/features/dashboard/services/dashboardBlogService";
-
-const blogFormSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  content: z.string().min(20, "Content must be at least 20 characters"),
-  categoryId: z.string().min(1, "Please select a category"),
-  tags: z.array(z.string()).optional(),
-  readingTime: z.string().optional(),
-  imageUrl: z.string().optional(),
-  metaTitle: z.string().optional(),
-  metaDescription: z.string().optional(),
-  status: z.enum(["published", "draft"]),
-});
+import { useBlogDraftPersistence } from "./hooks/useBlogDraftPersistence";
+import { blogFormSchema } from "./validations/editBlogs.validations";
 
 type BlogFormValues = z.infer<typeof blogFormSchema>;
 
@@ -65,16 +54,16 @@ export function EditBlog({ blogId }: EditBlogProps) {
   const [isPending, startTransition] = useTransition();
   const { categories } = useCategories();
   const { tags, tagInput, setTagInput, addTag, removeTag, handleKeyDown, resetTags } = useTagInput();
-  const [content, setContent] = useState("");
   const [dataLoading, setDataLoading] = useState(true);
 
   const {
     register,
     handleSubmit,
+    control,
     setValue,
     watch,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<BlogFormValues>({
     resolver: zodResolver(blogFormSchema),
     defaultValues: {
@@ -92,6 +81,27 @@ export function EditBlog({ blogId }: EditBlogProps) {
   });
 
   const status = watch("status");
+  const content = watch("content");
+  const [sourceFingerprint, setSourceFingerprint] = useState<string>("");
+
+  const canHydrateDraft = useMemo(
+    () => (draft: { sourceFingerprint?: string }) =>
+      !draft.sourceFingerprint || draft.sourceFingerprint === sourceFingerprint,
+    [sourceFingerprint]
+  );
+
+  const { clearDraft } = useBlogDraftPersistence({
+    mode: "edit",
+    blogId,
+    control,
+    reset,
+    tags,
+    resetTags,
+    isDirty,
+    sourceFingerprint,
+    isReady: !dataLoading && Boolean(sourceFingerprint),
+    canHydrateDraft,
+  });
 
   // Load blog data
   useEffect(() => {
@@ -111,10 +121,7 @@ export function EditBlog({ blogId }: EditBlogProps) {
             : (blog.category as unknown as string) || "";
 
         const formTags = blog.tags || [];
-        resetTags(formTags);
-        setContent(blog.content || "");
-
-        reset({
+        const baselineValues = {
           title: blog.title,
           description: blog.description,
           content: blog.content || "",
@@ -125,7 +132,12 @@ export function EditBlog({ blogId }: EditBlogProps) {
           metaTitle: blog.metaTitle || "",
           metaDescription: blog.metaDescription || "",
           status: (blog.status as "published" | "draft") || "draft",
-        });
+        };
+        const nextSourceFingerprint = JSON.stringify(baselineValues);
+
+        resetTags(formTags);
+        reset(baselineValues);
+        setSourceFingerprint(nextSourceFingerprint);
       } catch (error) {
         console.error("Error loading blog:", error);
         toast.error("Failed to load blog data");
@@ -137,11 +149,6 @@ export function EditBlog({ blogId }: EditBlogProps) {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blogId, router, reset]);
-
-  // Sync content with form
-  useEffect(() => {
-    setValue("content", content);
-  }, [content, setValue]);
 
   // Sync tags with form
   useEffect(() => {
@@ -164,6 +171,7 @@ export function EditBlog({ blogId }: EditBlogProps) {
         formData.append("status", data.status);
 
         await dashboardBlogService.updateBlog(blogId, formData);
+        clearDraft();
         toast.success("Blog updated successfully!");
         router.push("/dashboard/blogs");
       } catch (error) {
@@ -276,7 +284,15 @@ export function EditBlog({ blogId }: EditBlogProps) {
               <CardDescription>Edit your blog content</CardDescription>
             </CardHeader>
             <CardContent>
-              <RichTextEditor content={content} onContentChange={setContent} />
+              <RichTextEditor
+                content={content}
+                onContentChange={(nextContent) =>
+                  setValue("content", nextContent, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
               {errors.content && (
                 <p className="text-sm text-destructive mt-2">
                   {errors.content.message}
@@ -298,7 +314,7 @@ export function EditBlog({ blogId }: EditBlogProps) {
                 <Switch
                   id="publish-switch"
                   checked={status === "published"}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked: boolean) =>
                     setValue("status", checked ? "published" : "draft")
                   }
                 />
@@ -318,7 +334,7 @@ export function EditBlog({ blogId }: EditBlogProps) {
             <CardContent>
               <Select
                 value={watch("categoryId")}
-                onValueChange={(v) => setValue("categoryId", String(v ?? ""))}
+                onValueChange={(v: string) => setValue("categoryId", String(v ?? ""))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />

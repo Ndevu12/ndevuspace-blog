@@ -1,8 +1,6 @@
 "use client";
 
-"use client";
-
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,19 +39,8 @@ import { Separator } from "@/components/ui/separator";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { useCategories, useTagInput } from "@/hooks";
 import { dashboardBlogService } from "@/features/dashboard/services/dashboardBlogService";
-
-const blogFormSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  content: z.string().min(20, "Content must be at least 20 characters"),
-  categoryId: z.string().min(1, "Please select a category"),
-  tags: z.array(z.string()).optional(),
-  readingTime: z.string().optional(),
-  imageUrl: z.string().optional(),
-  metaTitle: z.string().optional(),
-  metaDescription: z.string().optional(),
-  status: z.enum(["published", "draft"]),
-});
+import { useBlogDraftPersistence } from "./hooks/useBlogDraftPersistence";
+import { blogFormSchema } from "./validations/editBlogs.validations";
 
 type BlogFormValues = z.infer<typeof blogFormSchema>;
 
@@ -61,15 +48,24 @@ export function NewBlog() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const { categories } = useCategories();
-  const { tags, tagInput, setTagInput, addTag, removeTag, handleKeyDown } = useTagInput();
-  const [content, setContent] = useState("");
+  const {
+    tags,
+    tagInput,
+    setTagInput,
+    addTag,
+    removeTag,
+    handleKeyDown,
+    resetTags,
+  } = useTagInput();
 
   const {
     register,
     handleSubmit,
+    control,
+    reset,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<BlogFormValues>({
     resolver: zodResolver(blogFormSchema),
     defaultValues: {
@@ -87,11 +83,17 @@ export function NewBlog() {
   });
 
   const status = watch("status");
+  const content = watch("content");
+  const categoryId = watch("categoryId");
 
-  // Sync content with form
-  useEffect(() => {
-    setValue("content", content);
-  }, [content, setValue]);
+  const { clearDraft } = useBlogDraftPersistence({
+    mode: "new",
+    control,
+    reset,
+    tags,
+    resetTags,
+    isDirty,
+  });
 
   // Sync tags with form
   useEffect(() => {
@@ -114,6 +116,7 @@ export function NewBlog() {
         formData.append("status", data.status);
 
         await dashboardBlogService.createBlog(formData);
+        clearDraft();
         toast.success(
           data.status === "published"
             ? "Blog published successfully!"
@@ -222,7 +225,12 @@ export function NewBlog() {
             <CardContent>
               <RichTextEditor
                 content={content}
-                onContentChange={setContent}
+                onContentChange={(nextContent) =>
+                  setValue("content", nextContent, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
               />
               {errors.content && (
                 <p className="text-sm text-destructive mt-2">
@@ -246,7 +254,7 @@ export function NewBlog() {
                 <Switch
                   id="publish-switch"
                   checked={status === "published"}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked: boolean) =>
                     setValue("status", checked ? "published" : "draft")
                   }
                 />
@@ -266,7 +274,8 @@ export function NewBlog() {
             </CardHeader>
             <CardContent>
               <Select
-                onValueChange={(v) => setValue("categoryId", String(v ?? ""))}
+                value={categoryId || undefined}
+                onValueChange={(v: string) => setValue("categoryId", String(v ?? ""))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
