@@ -200,12 +200,59 @@ $$;
 COMMENT ON FUNCTION public.blog_dashboard_timeseries(text, date, date, text) IS
   'Dashboard timeseries RPC. Args: p_metric text (posts_created|views), p_start date, p_end date, p_bucket text (day|week|month). Requires authenticated session. Visibility scope is role-aware: admins aggregate across all blogs; non-admins aggregate only blogs where author_id = auth.uid(). Returns {"points":[{"bucket_start":"timestamp","value":"number"}]}. Notes: p_start/p_end default to last 30 days when null and p_end must be >= p_start. The views metric is based on current blogs.views_count grouped by created_at bucket (proxy, not event-log timeseries).';
 
+CREATE OR REPLACE FUNCTION public.blog_dashboard_category_distribution()
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY INVOKER
+SET search_path = public
+AS $$
+DECLARE
+  v_actor_id uuid;
+  v_is_admin boolean;
+BEGIN
+  v_actor_id := public.blog_assert_authenticated_user();
+  v_is_admin := public.blog_auth_is_blog_admin();
+
+  RETURN (
+    WITH category_counts AS (
+      SELECT
+        COALESCE(c.name, NULLIF(trim(b.category), ''), 'Uncategorized') AS category,
+        count(*)::int AS posts
+      FROM public.blogs b
+      LEFT JOIN public.blog_categories c ON c.id = b.category_id
+      WHERE v_is_admin OR b.author_id = v_actor_id
+      GROUP BY 1
+    )
+    SELECT jsonb_build_object(
+      'categories',
+      COALESCE(
+        jsonb_agg(
+          jsonb_build_object(
+            'category', cc.category,
+            'posts', cc.posts
+          )
+          ORDER BY cc.posts DESC, cc.category ASC
+        ),
+        '[]'::jsonb
+      )
+    )
+    FROM category_counts cc
+  );
+END;
+$$;
+
+COMMENT ON FUNCTION public.blog_dashboard_category_distribution() IS
+  'Dashboard category distribution RPC. Args: none. Requires authenticated session. Visibility scope is role-aware: admins aggregate across all blogs; non-admins aggregate only blogs where author_id = auth.uid(). Returns {"categories":[{"category":"text","posts":"int"}]} ordered by posts DESC then category ASC.';
+
 REVOKE ALL ON FUNCTION public.blog_dashboard_stats() FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.blog_dashboard_recent_activity(int) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.blog_dashboard_timeseries(text, date, date, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.blog_dashboard_category_distribution() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.blog_dashboard_stats() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.blog_dashboard_recent_activity(int) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.blog_dashboard_timeseries(text, date, date, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blog_dashboard_category_distribution() TO authenticated;
 
 -- =============================================================================
 -- Migration Complete

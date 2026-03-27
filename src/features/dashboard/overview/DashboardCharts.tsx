@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   AreaChart,
   Area,
@@ -27,23 +28,8 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-
-// ─── Traffic Chart ───
-
-const trafficData = [
-  { month: "Jan", views: 1200 },
-  { month: "Feb", views: 1900 },
-  { month: "Mar", views: 1500 },
-  { month: "Apr", views: 2100 },
-  { month: "May", views: 2300 },
-  { month: "Jun", views: 1800 },
-  { month: "Jul", views: 3000 },
-  { month: "Aug", views: 4200 },
-  { month: "Sep", views: 3800 },
-  { month: "Oct", views: 3200 },
-  { month: "Nov", views: 3600 },
-  { month: "Dec", views: 4800 },
-];
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDashboardOverviewStore } from "./store";
 
 const trafficConfig = {
   views: {
@@ -52,30 +38,12 @@ const trafficConfig = {
   },
 } satisfies ChartConfig;
 
-// ─── Posts by Category Chart ───
-
-const categoryData = [
-  { category: "Programming", posts: 12 },
-  { category: "Web Dev", posts: 8 },
-  { category: "Design", posts: 5 },
-  { category: "Technology", posts: 7 },
-  { category: "Career", posts: 3 },
-];
-
 const categoryConfig = {
   posts: {
     label: "Posts",
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig;
-
-// ─── Status Distribution Chart ───
-
-const statusData = [
-  { name: "Published", value: 24, fill: "hsl(var(--chart-1))" },
-  { name: "Draft", value: 8, fill: "hsl(var(--chart-3))" },
-  { name: "Archived", value: 3, fill: "hsl(var(--chart-5))" },
-];
 
 const statusConfig = {
   Published: { label: "Published", color: "hsl(var(--chart-1))" },
@@ -84,6 +52,52 @@ const statusConfig = {
 } satisfies ChartConfig;
 
 export function DashboardCharts() {
+  const {
+    trafficData,
+    categoryData,
+    statusData,
+    chartsLoading: loading,
+    loadCharts,
+  } = useDashboardOverviewStore();
+
+  useEffect(() => {
+    loadCharts();
+  }, [loadCharts]);
+
+  if (loading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-4 w-40" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-4 w-52" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {/* Traffic Area Chart */}
@@ -93,34 +107,40 @@ export function DashboardCharts() {
           <CardDescription>Monthly page views over the past year</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={trafficConfig} className="h-[300px] w-full">
-            <AreaChart data={trafficData} accessibilityLayer>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tickFormatter={(value) =>
-                  value >= 1000 ? `${value / 1000}k` : String(value)
-                }
-              />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Area
-                type="monotone"
-                dataKey="views"
-                stroke="var(--color-views)"
-                fill="var(--color-views)"
-                fillOpacity={0.3}
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ChartContainer>
+          {trafficData.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No page view data available
+            </p>
+          ) : (
+            <ChartContainer config={trafficConfig} className="h-[300px] w-full">
+              <AreaChart data={trafficData} accessibilityLayer>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(value) =>
+                    value >= 1000 ? `${value / 1000}k` : String(value)
+                  }
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area
+                  type="monotone"
+                  dataKey="views"
+                  stroke="var(--color-views)"
+                  fill="var(--color-views)"
+                  fillOpacity={0.3}
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ChartContainer>
+          )}
         </CardContent>
       </Card>
 
@@ -131,26 +151,32 @@ export function DashboardCharts() {
           <CardDescription>Distribution by status</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={statusConfig} className="h-[300px] w-full">
-            <PieChart accessibilityLayer>
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Pie
-                data={statusData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={90}
-                paddingAngle={4}
-              >
-                {statusData.map((entry) => (
-                  <Cell key={entry.name} fill={entry.fill} />
-                ))}
-              </Pie>
-              <ChartLegend content={<ChartLegendContent />} />
-            </PieChart>
-          </ChartContainer>
+          {statusData.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No status distribution available
+            </p>
+          ) : (
+            <ChartContainer config={statusConfig} className="h-[300px] w-full">
+              <PieChart accessibilityLayer>
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Pie
+                  data={statusData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={4}
+                >
+                  {statusData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <ChartLegend content={<ChartLegendContent />} />
+              </PieChart>
+            </ChartContainer>
+          )}
         </CardContent>
       </Card>
 
@@ -161,25 +187,31 @@ export function DashboardCharts() {
           <CardDescription>Number of posts in each category</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={categoryConfig} className="h-[300px] w-full">
-            <BarChart data={categoryData} accessibilityLayer>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="category"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-              />
-              <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={<ChartLegendContent />} />
-              <Bar
-                dataKey="posts"
-                fill="var(--color-posts)"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ChartContainer>
+          {categoryData.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No category data available
+            </p>
+          ) : (
+            <ChartContainer config={categoryConfig} className="h-[300px] w-full">
+              <BarChart data={categoryData} accessibilityLayer>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="category"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
+                <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar
+                  dataKey="posts"
+                  fill="var(--color-posts)"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ChartContainer>
+          )}
         </CardContent>
       </Card>
     </div>

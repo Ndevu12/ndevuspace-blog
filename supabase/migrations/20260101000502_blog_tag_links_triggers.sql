@@ -24,6 +24,12 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
+  -- Guard against full tag table deletion when the link table is empty.
+  -- This can happen during seed resets that DELETE links before re-inserting.
+  IF NOT EXISTS (SELECT 1 FROM public.blog_tag_links LIMIT 1) THEN
+    RETURN NULL;
+  END IF;
+
   DELETE FROM public.blog_tags t
   WHERE NOT EXISTS (
     SELECT 1

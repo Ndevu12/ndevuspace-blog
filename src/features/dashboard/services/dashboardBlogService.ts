@@ -3,6 +3,7 @@ import type {
   BlogAdminFilters,
   BlogAdminListRpcParams,
   BlogAdminResponse,
+  BlogDashboardCategoryDistributionResponse,
   BlogAdminRpcPayload,
   BlogDashboardRecentActivityResponse,
   BlogDashboardStatsResponse,
@@ -350,6 +351,27 @@ export async function getDashboardTimeseries(
   };
 }
 
+export async function getDashboardCategoryDistribution(): Promise<BlogDashboardCategoryDistributionResponse> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("blog_dashboard_category_distribution");
+
+  if (error) {
+    throw new Error(error.message || "Failed to fetch dashboard category distribution.");
+  }
+
+  const payload = toRpcRecord(data, "Invalid dashboard category distribution response.");
+  const categories = Array.isArray(payload.categories) ? payload.categories : [];
+
+  return {
+    categories: categories
+      .filter((item): item is RpcRecord => Boolean(item) && typeof item === "object")
+      .map((item) => ({
+        category: typeof item.category === "string" ? item.category : "Unknown",
+        posts: Number(item.posts ?? 0),
+      })),
+  };
+}
+
 export const dashboardBlogService = {
   getAdminBlogs,
   getBlogById,
@@ -360,5 +382,6 @@ export const dashboardBlogService = {
   getDashboardStats,
   getDashboardRecentActivity,
   getDashboardTimeseries,
+  getDashboardCategoryDistribution,
 };
 
