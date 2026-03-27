@@ -275,7 +275,7 @@ export function NewBlog() {
             <CardContent>
               <Select
                 value={categoryId || undefined}
-                onValueChange={(v: string) => setValue("categoryId", String(v ?? ""))}
+                onValueChange={(v) => setValue("categoryId", v ?? "")}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />

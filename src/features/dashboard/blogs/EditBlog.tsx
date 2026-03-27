@@ -334,7 +334,7 @@ export function EditBlog({ blogId }: EditBlogProps) {
             <CardContent>
               <Select
                 value={watch("categoryId")}
-                onValueChange={(v: string) => setValue("categoryId", String(v ?? ""))}
+                onValueChange={(v) => setValue("categoryId", v ?? "")}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />

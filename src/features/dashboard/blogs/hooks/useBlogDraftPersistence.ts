@@ -25,11 +25,11 @@ const EMPTY_VALUES: BlogDraftValues = {
 
 type DraftMode = "new" | "edit";
 
-interface UseBlogDraftPersistenceOptions {
+interface UseBlogDraftPersistenceOptions<FormValues extends Partial<BlogDraftValues>> {
   mode: DraftMode;
   blogId?: string;
-  control: Control<BlogDraftValues>;
-  reset: UseFormReset<BlogDraftValues>;
+  control: Control<FormValues>;
+  reset: UseFormReset<FormValues>;
   tags: string[];
   resetTags?: (tags: string[]) => void;
   isDirty: boolean;
@@ -61,7 +61,7 @@ function normalizeValues(
   };
 }
 
-export function useBlogDraftPersistence({
+export function useBlogDraftPersistence<FormValues extends Partial<BlogDraftValues>>({
   mode,
   blogId,
   control,
@@ -72,7 +72,7 @@ export function useBlogDraftPersistence({
   sourceFingerprint,
   isReady = true,
   canHydrateDraft,
-}: UseBlogDraftPersistenceOptions): UseBlogDraftPersistenceResult {
+}: UseBlogDraftPersistenceOptions<FormValues>): UseBlogDraftPersistenceResult {
   const values = useWatch({ control });
   const newDraft = useBlogDraftStore((state) => state.newDraft);
   const editDraft = useBlogDraftStore((state) =>
@@ -109,7 +109,7 @@ export function useBlogDraftPersistence({
         return;
       }
       skipAutosaveRef.current = true;
-      reset(draftEntry.values);
+      reset(draftEntry.values as FormValues);
       resetTags?.(draftEntry.values.tags);
       baselineRef.current = JSON.stringify(draftEntry.values);
       hydratedRef.current = true;
