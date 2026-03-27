@@ -107,7 +107,7 @@ export function EditBlog({ blogId }: EditBlogProps) {
 
         const categoryId =
           typeof blog.category === "object"
-            ? blog.category?._id || ""
+            ? blog.category?.id || ""
             : (blog.category as unknown as string) || "";
 
         const formTags = blog.tags || [];
@@ -325,7 +325,7 @@ export function EditBlog({ blogId }: EditBlogProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
-                    <SelectItem key={cat._id} value={cat._id}>
+                    <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </SelectItem>
                   ))}

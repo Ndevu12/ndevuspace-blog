@@ -23,18 +23,17 @@ function toRpcRecord(data: unknown, errorMessage: string): RpcRecord {
 }
 
 function normalizeBlogPost(post: BlogPost): BlogPost {
-  const normalizedId = post.id ?? post._id ?? "";
+  const normalizedId = post.id ?? "";
   const category = post.category
     ? {
         ...post.category,
-        _id: post.category._id ?? post.category.id,
+        id: post.category.id,
       }
     : undefined;
 
   return {
     ...post,
     id: normalizedId,
-    _id: post._id ?? normalizedId,
     category,
   };
 }

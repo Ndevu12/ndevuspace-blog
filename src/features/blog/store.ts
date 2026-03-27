@@ -121,13 +121,13 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
       const { activeCategory } = get();
       let resolvedCategory = activeCategory;
       if (activeCategory && activeCategory !== "all") {
-        const isAlreadyId = categories.some((c) => c._id === activeCategory);
+        const isAlreadyId = categories.some((c) => c.id === activeCategory);
         if (!isAlreadyId) {
           const found = categories.find(
             (c) => c.name.toLowerCase() === activeCategory.toLowerCase()
           );
           if (found) {
-            resolvedCategory = found._id;
+            resolvedCategory = found.id;
           }
         }
       }
@@ -188,9 +188,9 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         } else if (activeTag) {
           data = await getBlogsByTag(activeTag, 1, POSTS_PER_PAGE);
         } else if (activeCategory && activeCategory !== "all") {
-          const category = blogCategories.find((cat) => cat._id === activeCategory);
+          const category = blogCategories.find((cat) => cat.id === activeCategory);
           if (category) {
-            data = await getBlogsByCategory(category._id, 1, POSTS_PER_PAGE);
+            data = await getBlogsByCategory(category.id, 1, POSTS_PER_PAGE);
           } else {
             data = await getBlogsPaginated(1, POSTS_PER_PAGE);
           }
@@ -254,9 +254,9 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         if (searchQuery.trim()) {
           response = await searchBlogsByTitle(searchQuery, nextPage, POSTS_PER_PAGE);
         } else if (activeCategory !== "all") {
-          const selectedCategory = blogCategories.find((cat) => cat._id === activeCategory);
+          const selectedCategory = blogCategories.find((cat) => cat.id === activeCategory);
           if (selectedCategory) {
-            response = await getBlogsByCategory(selectedCategory._id, nextPage, POSTS_PER_PAGE);
+            response = await getBlogsByCategory(selectedCategory.id, nextPage, POSTS_PER_PAGE);
           } else {
             response = await getBlogsPaginated(nextPage, POSTS_PER_PAGE);
           }
@@ -348,13 +348,13 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         updates.activeCategory = "all";
         updates.searchQuery = "";
       } else if (category) {
-        // Resolve category name to _id
+        // Resolve category name to id
         const { blogCategories } = get();
         const found = blogCategories.find(
           (c) => c.name.toLowerCase() === category.toLowerCase()
         );
         if (found) {
-          updates.activeCategory = found._id;
+          updates.activeCategory = found.id;
         } else {
           // If categories aren't loaded yet, store the name and resolve later
           updates.activeCategory = category;

@@ -46,6 +46,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCategoryManagerStore } from "./store";
 import { categoryFormSchema, type CategoryFormData } from "@/types/admin";
+import type { BlogCategory } from "@/types/blog";
 
 export function CategoryManager() {
   const [isPending, startTransition] = useTransition();
@@ -83,9 +84,9 @@ export function CategoryManager() {
     openCreateDialog();
   }
 
-  function handleOpenEdit(category: { _id: string; name: string; icon: string }) {
+  function handleOpenEdit(category: BlogCategory) {
     reset({ name: category.name, icon: category.icon });
-    openEditDialog(category as import("@/types/blog").BlogCategory);
+    openEditDialog(category);
   }
 
   function onSubmit(data: CategoryFormData) {
@@ -232,7 +233,7 @@ export function CategoryManager() {
               </TableRow>
             ) : (
               categories.map((cat) => (
-                <TableRow key={cat._id}>
+                <TableRow key={cat.id}>
                   <TableCell className="font-medium">{cat.name}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {cat.icon}
@@ -271,7 +272,7 @@ export function CategoryManager() {
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => handleDelete(cat._id)}
+                              onClick={() => handleDelete(cat.id)}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
                               Delete

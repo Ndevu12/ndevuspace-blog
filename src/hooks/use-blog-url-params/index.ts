@@ -49,8 +49,8 @@ export function useBlogUrlParams() {
       const newParams = new URLSearchParams();
 
       if (params.category && params.category !== "all") {
-        // Resolve _id → human-readable name for cleaner URLs
-        const cat = blogCategories.find((c) => c._id === params.category);
+        // Resolve id -> human-readable name for cleaner URLs
+        const cat = blogCategories.find((c) => c.id === params.category);
         newParams.set("category", cat ? cat.name : params.category);
       }
       if (params.tag) {

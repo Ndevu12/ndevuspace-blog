@@ -16,9 +16,6 @@ export interface Author {
   lastName?: string;
   createdAt?: IsoDateString;
   updatedAt?: IsoDateString;
-  /** @deprecated Legacy alias from pre-RPC shape. */
-  _id?: Uuid;
-  __v?: number;
 }
 
 export interface BlogComment {
@@ -28,9 +25,6 @@ export interface BlogComment {
   name: string;
   email?: string;
   createdAt: IsoDateString;
-  /** @deprecated Legacy alias from pre-RPC shape. */
-  _id?: Uuid;
-  __v?: number;
 }
 
 export interface BlogCategory {
@@ -38,8 +32,6 @@ export interface BlogCategory {
   name: string;
   slug?: string;
   icon?: string;
-  /** @deprecated Legacy alias from pre-RPC shape. */
-  _id?: Uuid;
 }
 
 /** Domain post; Supabase `blog_row_json` must align with {@link BlogRowJson}. */
@@ -66,35 +58,30 @@ export interface BlogPost {
   status?: "published" | "draft" | "archived";
   viewsCount?: number;
   likesCount?: number;
-  /** @deprecated Legacy alias from pre-RPC shape. */
-  _id?: Uuid;
 }
 
 // ─── RPC blog_row_json wire contract ───
 
 /** Author object inside `blog_row_json.author`; maps to {@link Author}. */
 export interface BlogRowJsonAuthor {
-  _id: string;
+  id: string;
   user: string;
   firstName?: string;
   lastName?: string;
   createdAt?: string;
   updatedAt?: string;
-  __v?: number;
 }
 
 /** Category object inside `blog_row_json.category`; maps to {@link BlogCategory}. */
 export interface BlogRowJsonCategory {
-  _id: string;
+  id: string;
   name: string;
   icon: string;
 }
 
 /** JSON object for one blog returned from `blog_*` RPCs. */
 export interface BlogRowJson {
-  _id: string;
-  /** Duplicate of `_id` for clients that read `post.id`; SQL may emit both. */
-  id?: string;
+  id: string;
   slug: string;
   title: string;
   description?: string;
@@ -125,7 +112,6 @@ export interface BlogRowJson {
 
 /** Every top-level key SQL may emit for `blog_row_json` (camelCase). */
 export const BLOG_ROW_JSON_KEYS = {
-  _id: "_id",
   id: "id",
   slug: "slug",
   title: "title",
@@ -158,11 +144,10 @@ export type BlogRowJsonKey = (typeof BLOG_ROW_JSON_KEYS)[keyof typeof BLOG_ROW_J
  * `postgresSource` describes intended `public` schema source.
  */
 export const BLOG_ROW_JSON_SQL_SOURCES = [
-  { jsonKey: BLOG_ROW_JSON_KEYS._id, blogPostKey: "_id (and id)" as const, postgresSource: "blogs.id" },
   {
     jsonKey: BLOG_ROW_JSON_KEYS.id,
     blogPostKey: "id",
-    postgresSource: "blogs.id (duplicate of _id, optional)",
+    postgresSource: "blogs.id",
   },
   { jsonKey: BLOG_ROW_JSON_KEYS.slug, blogPostKey: "slug", postgresSource: "blogs.slug" },
   { jsonKey: BLOG_ROW_JSON_KEYS.title, blogPostKey: "title", postgresSource: "blogs.title" },
@@ -197,7 +182,7 @@ export const BLOG_ROW_JSON_SQL_SOURCES = [
   {
     jsonKey: BLOG_ROW_JSON_KEYS.category,
     blogPostKey: "category",
-    postgresSource: "json from join blog_categories: _id ← id, name, icon ← blog_categories.icon",
+    postgresSource: "json from join blog_categories: id, name, icon ← blog_categories.icon",
   },
   {
     jsonKey: BLOG_ROW_JSON_KEYS.tags,
@@ -247,7 +232,6 @@ export const BLOG_ROW_JSON_SQL_SOURCES = [
 
 const EMPTY_AUTHOR_SENTINEL: Author = {
   id: "",
-  _id: "",
   user: "",
   firstName: "",
   lastName: "",
@@ -257,21 +241,18 @@ const EMPTY_AUTHOR_SENTINEL: Author = {
 
 function authorFromRow(a: BlogRowJsonAuthor): Author {
   return {
-    id: a._id,
-    _id: a._id,
+    id: a.id,
     user: a.user,
     firstName: a.firstName ?? "",
     lastName: a.lastName ?? "",
     createdAt: a.createdAt ?? EMPTY_AUTHOR_SENTINEL.createdAt,
     updatedAt: a.updatedAt ?? EMPTY_AUTHOR_SENTINEL.updatedAt,
-    ...(a.__v !== undefined ? { __v: a.__v } : {}),
   };
 }
 
 function categoryFromRow(c: BlogRowJsonCategory): BlogCategory {
   return {
-    id: c._id,
-    _id: c._id,
+    id: c.id,
     name: c.name,
     icon: c.icon,
   };
@@ -280,8 +261,7 @@ function categoryFromRow(c: BlogRowJsonCategory): BlogCategory {
 /** Normalize RPC `blog_row_json` into {@link BlogPost}. */
 export function blogRowJsonToBlogPost(row: BlogRowJson): BlogPost {
   return {
-    _id: row._id,
-    id: row.id ?? row._id,
+    id: row.id,
     slug: row.slug,
     title: row.title,
     description: row.description ?? "",

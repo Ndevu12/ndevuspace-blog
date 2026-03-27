@@ -41,7 +41,7 @@ export async function getBlogsPaginated(
 }
 
 export async function getBlogById(id: string): Promise<BlogPost | null> {
-  return dummyBlogs.find((b) => b.id === id || b._id === id) ?? null;
+  return dummyBlogs.find((b) => b.id === id) ?? null;
 }
 
 export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
@@ -53,9 +53,7 @@ export async function getBlogsByCategory(
   page: number = 1,
   limit: number = 10
 ): Promise<PaginatedBlogsResponse> {
-  const filtered = dummyBlogs.filter(
-    (b) => b.category?.id === categoryId || b.category?._id === categoryId
-  );
+  const filtered = dummyBlogs.filter((b) => b.category?.id === categoryId);
   return paginate(filtered, page, limit);
 }
 
@@ -90,7 +88,7 @@ export async function searchBlogsByTitle(
 export async function likeBlog(
   blogId: string
 ): Promise<{ likes: number } | null> {
-  const post = dummyBlogs.find((b) => b.id === blogId || b._id === blogId);
+  const post = dummyBlogs.find((b) => b.id === blogId);
   return post ? { likes: (post.likes ?? 0) + 1 } : null;
 }
 

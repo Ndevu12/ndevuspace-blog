@@ -31,7 +31,7 @@ export function BlogSidebar({
         </CardHeader>
         <CardContent className="space-y-4">
           {popularPosts.map((post) => (
-            <div key={post._id || post.id} className="flex gap-3 group">
+            <div key={post.id} className="flex gap-3 group">
               <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden">
                 <Image
                   src={post.imageUrl || "/images/blog/placeholder.jpg"}

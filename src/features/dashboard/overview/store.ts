@@ -126,7 +126,7 @@ export const useDashboardOverviewStore = create<DashboardOverviewState>(
 
         const recentActivities: Activity[] = response.blogs.map(
           (blog: BlogPost) => ({
-            id: blog._id,
+            id: blog.id,
             text: `Updated "${blog.title}"`,
             time: blog.updatedAt
               ? formatDistanceToNow(new Date(blog.updatedAt), {

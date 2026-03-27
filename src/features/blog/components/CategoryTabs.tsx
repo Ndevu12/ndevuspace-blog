@@ -24,8 +24,8 @@ export function CategoryTabs({
   // All categories including "All Topics"
   const allCategories = useMemo(
     () => [
-      { _id: "all", name: "All Topics", icon: "grid" } as BlogCategory,
-      ...categories.filter((category) => category._id !== "all"),
+      { id: "all", name: "All Topics", icon: "grid" } as BlogCategory,
+      ...categories.filter((category) => category.id !== "all"),
     ],
     [categories]
   );
@@ -70,14 +70,15 @@ export function CategoryTabs({
             className="flex gap-2 md:gap-4 justify-start md:justify-center min-w-max pb-2"
           >
             {allCategories.map((category) => {
+              const categoryId = category.id;
               const isActive =
-                activeCategory === category._id && !isSearchActive;
+                activeCategory === categoryId && !isSearchActive;
 
               return (
                 <button
-                  key={category._id}
-                  data-category={category._id}
-                  onClick={() => onCategoryChange(category._id)}
+                  key={categoryId}
+                  data-category={categoryId}
+                  onClick={() => onCategoryChange(categoryId)}
                   className={`
                     px-4 py-2 rounded-full font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 flex items-center gap-2
                     ${
@@ -89,7 +90,7 @@ export function CategoryTabs({
                     }
                   `}
                 >
-                  {category._id === "all" && (
+                  {categoryId === "all" && (
                     <LayoutGrid className="h-4 w-4" />
                   )}
                   {category.name}
