@@ -186,11 +186,18 @@ $$;
 COMMENT ON FUNCTION public.blog_tag_admin_list(int, int) IS
   'Tag read RPC. Args: p_page int default 1, p_limit int default 50 (capped at 200). Returns {"tags":[{"id":"uuid","name":"text","slug":"text","description":"text|null","created_at":"timestamptz","updated_at":"timestamptz"}],"pagination":{"page":"int","limit":"int","total":"int","has_more":"boolean"}} ordered by case-insensitive tag name.';
 
+-- Keep helper surface private to authenticated call paths only.
 REVOKE ALL ON FUNCTION public.blog_tag_slugify(text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.blog_tag_normalize_name(text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.blog_tag_resolve_slug(text, text) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.blog_tag_upsert_by_names(text[]) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.blog_tag_admin_list(int, int) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.blog_tag_upsert_by_names(text[]) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.blog_tag_admin_list(int, int) FROM PUBLIC, anon, authenticated;
+
+-- Required by SECURITY INVOKER call chain:
+-- blog_tag_upsert_by_names -> blog_tag_normalize_name/blog_tag_resolve_slug -> blog_tag_slugify.
+GRANT EXECUTE ON FUNCTION public.blog_tag_slugify(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blog_tag_normalize_name(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blog_tag_resolve_slug(text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.blog_tag_upsert_by_names(text[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.blog_tag_admin_list(int, int) TO authenticated;
 

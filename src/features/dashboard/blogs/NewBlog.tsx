@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,6 +39,7 @@ import { Separator } from "@/components/ui/separator";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { useCategories, useTagInput } from "@/hooks";
 import { dashboardBlogService } from "@/features/dashboard/services/dashboardBlogService";
+import { blogMediaService } from "@/features/dashboard/services/blogMediaService";
 import { useBlogDraftPersistence } from "./hooks/useBlogDraftPersistence";
 import { blogFormSchema } from "./validations/editBlogs.validations";
 
@@ -47,6 +48,7 @@ type BlogFormValues = z.infer<typeof blogFormSchema>;
 export function NewBlog() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { categories } = useCategories();
   const {
     tags,
@@ -84,7 +86,8 @@ export function NewBlog() {
 
   const status = watch("status");
   const content = watch("content");
-  const categoryId = watch("categoryId");
+  const categoryId = watch("categoryId") ?? "";
+  const imageUrl = watch("imageUrl") ?? "";
 
   const { clearDraft } = useBlogDraftPersistence({
     mode: "new",
@@ -108,7 +111,7 @@ export function NewBlog() {
         formData.append("description", data.description);
         formData.append("content", data.content);
         if (data.categoryId) formData.append("category", data.categoryId);
-        if (data.tags?.length) formData.append("tags", JSON.stringify(data.tags));
+        formData.append("tags", JSON.stringify(data.tags ?? []));
         if (data.readingTime) formData.append("readTime", `${data.readingTime} min read`);
         if (data.imageUrl) formData.append("imageUrl", data.imageUrl);
         if (data.metaTitle) formData.append("metaTitle", data.metaTitle);
@@ -139,6 +142,20 @@ export function NewBlog() {
   function handlePublish() {
     setValue("status", "published");
     handleSubmit(onSubmit)();
+  }
+
+  async function handleImageUpload(file: File | null) {
+    if (!file) return;
+    setIsUploadingImage(true);
+    try {
+      const uploadedUrl = await blogMediaService.uploadFeaturedImage(file, {});
+      setValue("imageUrl", uploadedUrl, { shouldDirty: true, shouldValidate: true });
+      toast.success("Image uploaded successfully.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload image");
+    } finally {
+      setIsUploadingImage(false);
+    }
   }
 
   return (
@@ -274,7 +291,7 @@ export function NewBlog() {
             </CardHeader>
             <CardContent>
               <Select
-                value={categoryId || undefined}
+                value={categoryId}
                 onValueChange={(v) => setValue("categoryId", v ?? "")}
               >
                 <SelectTrigger>
@@ -351,6 +368,27 @@ export function NewBlog() {
                   placeholder="https://..."
                   {...register("imageUrl")}
                 />
+                <div className="space-y-2">
+                  <Label htmlFor="imageUpload">Or upload from computer</Label>
+                  <Input
+                    id="imageUpload"
+                    type="file"
+                    accept="image/*"
+                    disabled={isUploadingImage}
+                    onChange={(e) => {
+                      const selected = e.target.files?.[0] ?? null;
+                      void handleImageUpload(selected);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {isUploadingImage
+                      ? "Uploading image..."
+                      : imageUrl
+                        ? "Uploaded image URL is filled above. You can still paste a different URL."
+                        : "Upload an image or paste a URL above."}
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">

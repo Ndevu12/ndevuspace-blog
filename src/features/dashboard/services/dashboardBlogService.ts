@@ -199,7 +199,7 @@ function buildPayloadFromFormData(formData: FormData): BlogAdminRpcPayload {
   }
 
   const tagNames = parseTags(formData.get("tags"));
-  if (tagNames && tagNames.length > 0) {
+  if (tagNames) {
     payload.tag_names = tagNames;
   }
 
