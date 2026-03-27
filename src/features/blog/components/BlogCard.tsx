@@ -3,7 +3,12 @@
 import { BlogPost } from "@/types/blog";
 import Image from "next/image";
 import Link from "next/link";
-import { getAuthorName, getAuthorImage, formatDate } from "@/lib/blogUtils";
+import {
+  getAuthorName,
+  getAuthorImage,
+  formatDate,
+  getSafeImageSrc,
+} from "@/lib/blogUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -23,6 +28,7 @@ function getCategoryName(category: BlogPost["category"]): string {
 export function BlogCard({ post }: BlogCardProps) {
   const authorName = getAuthorName(post.author);
   const categoryName = getCategoryName(post.category);
+  const imageSrc = getSafeImageSrc(post.imageUrl, "/images/blog/placeholder.jpg");
 
   return (
     <article>
@@ -31,7 +37,7 @@ export function BlogCard({ post }: BlogCardProps) {
         <div className="relative">
           <div className="relative w-full h-48 overflow-hidden">
             <Image
-              src={post.imageUrl || "/images/blog/placeholder.jpg"}
+              src={imageSrc}
               alt={post.title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

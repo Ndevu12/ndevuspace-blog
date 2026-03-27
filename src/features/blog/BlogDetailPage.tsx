@@ -9,7 +9,12 @@ import { ShareArticle } from "./components/ShareArticle";
 import { TableOfContents } from "./components/TableOfContents";
 import { CommentForm, CommentList } from "@/features/comments";
 import { useBlogDetailStore } from "./detailStore";
-import { getAuthorName, getAuthorImage, formatDate } from "@/lib/blogUtils";
+import {
+  getAuthorName,
+  getAuthorImage,
+  formatDate,
+  getSafeImageSrc,
+} from "@/lib/blogUtils";
 import { useRouter } from "next/navigation";
 import {
   Breadcrumb,
@@ -93,6 +98,7 @@ export function BlogDetailPage({ post }: BlogDetailPageProps) {
   }
 
   const authorName = getAuthorName(post.author);
+  const heroImageSrc = getSafeImageSrc(post.imageUrl, "/images/blog/placeholder.jpg");
 
   return (
     <>
@@ -165,10 +171,10 @@ export function BlogDetailPage({ post }: BlogDetailPageProps) {
           </div>
 
           {/* Featured Image */}
-          {post.imageUrl && (
+          {post.imageUrl?.trim() && (
             <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden mb-8">
               <Image
-                src={post.imageUrl}
+                src={heroImageSrc}
                 alt={post.title}
                 fill
                 className="object-cover"
@@ -263,10 +269,10 @@ export function BlogDetailPage({ post }: BlogDetailPageProps) {
                       <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full">
                         <div className="relative w-full h-40">
                           <Image
-                            src={
-                              relatedPost.imageUrl ||
+                            src={getSafeImageSrc(
+                              relatedPost.imageUrl,
                               "/images/blog/placeholder.jpg"
-                            }
+                            )}
                             alt={relatedPost.title}
                             fill
                             className="object-cover"

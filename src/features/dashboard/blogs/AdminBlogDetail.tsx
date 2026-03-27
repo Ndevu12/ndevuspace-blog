@@ -47,6 +47,27 @@ interface AdminBlogDetailProps {
   blogId: string;
 }
 
+function getSafeImageSrc(imageUrl?: string): string | null {
+  if (!imageUrl) return null;
+
+  const trimmed = imageUrl.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith("/")) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return trimmed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export function AdminBlogDetail({ blogId }: AdminBlogDetailProps) {
   const router = useRouter();
   const [blog, setBlog] = useState<AdminBlogPost | null>(null);
@@ -140,6 +161,7 @@ export function AdminBlogDetail({ blogId }: AdminBlogDetailProps) {
 
   const categoryName =
     typeof blog.category === "object" ? blog.category?.name : "Uncategorized";
+  const blogImageSrc = getSafeImageSrc(blog.imageUrl);
 
   return (
     <div className="space-y-6">
@@ -232,10 +254,10 @@ export function AdminBlogDetail({ blogId }: AdminBlogDetailProps) {
               <h1 className="text-2xl font-bold mb-4">{blog.title}</h1>
               <p className="text-muted-foreground mb-4">{blog.description}</p>
 
-              {blog.imageUrl && (
+              {blogImageSrc && (
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden mb-4">
                   <Image
-                    src={blog.imageUrl}
+                    src={blogImageSrc}
                     alt={blog.title}
                     fill
                     className="object-cover"
