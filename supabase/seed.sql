@@ -17,7 +17,17 @@ DECLARE
   v_seed_password_plain text := 'seed-password-change-me';
   v_seed_password_hash text;
 BEGIN
-  v_seed_password_hash := crypt(v_seed_password_plain, gen_salt('bf'));
+  -- pgcrypto functions may live in either extensions or public depending on environment.
+  IF to_regprocedure('extensions.gen_salt(text)') IS NOT NULL
+     AND to_regprocedure('extensions.crypt(text,text)') IS NOT NULL THEN
+    v_seed_password_hash := extensions.crypt(v_seed_password_plain, extensions.gen_salt('bf'));
+  ELSIF to_regprocedure('public.gen_salt(text)') IS NOT NULL
+     AND to_regprocedure('public.crypt(text,text)') IS NOT NULL THEN
+    v_seed_password_hash := public.crypt(v_seed_password_plain, public.gen_salt('bf'));
+  ELSE
+    RAISE EXCEPTION 'pgcrypto functions crypt/gen_salt not found in extensions or public schema'
+      USING ERRCODE = '42883';
+  END IF;
 
 -- 1) Seed auth users first (FK target for public.user_profiles.id).
 INSERT INTO auth.users (

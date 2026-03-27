@@ -25,3 +25,6 @@ CREATE TRIGGER trg_blog_tags_set_updated_at
 
 COMMENT ON FUNCTION public.set_blog_tags_updated_at() IS
   'Trigger function that refreshes updated_at before blog_tags updates.';
+
+-- Trigger helper only; prevent direct client execution.
+REVOKE ALL ON FUNCTION public.set_blog_tags_updated_at() FROM PUBLIC, anon, authenticated;

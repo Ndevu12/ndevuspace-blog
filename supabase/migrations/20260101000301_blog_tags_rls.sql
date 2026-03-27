@@ -27,3 +27,23 @@ END $$;
 
 COMMENT ON POLICY blog_tags_public_read ON public.blog_tags IS
   'Allows public and authenticated clients to read blog tags.';
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'blog_tags'
+      AND policyname = 'blog_tags_authenticated_insert'
+  ) THEN
+    CREATE POLICY blog_tags_authenticated_insert
+      ON public.blog_tags
+      FOR INSERT
+      TO authenticated
+      WITH CHECK (true);
+  END IF;
+END $$;
+
+COMMENT ON POLICY blog_tags_authenticated_insert ON public.blog_tags IS
+  'Allows authenticated users to insert blog tags (used by tag upsert RPC path).';

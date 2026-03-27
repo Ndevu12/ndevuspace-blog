@@ -40,6 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { useCategories, useTagInput } from "@/hooks";
 import { dashboardBlogService } from "@/features/dashboard/services/dashboardBlogService";
+import { blogMediaService } from "@/features/dashboard/services/blogMediaService";
 import { useBlogDraftPersistence } from "./hooks/useBlogDraftPersistence";
 import { blogFormSchema } from "./validations/editBlogs.validations";
 
@@ -52,6 +53,7 @@ interface EditBlogProps {
 export function EditBlog({ blogId }: EditBlogProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { categories } = useCategories();
   const { tags, tagInput, setTagInput, addTag, removeTag, handleKeyDown, resetTags } = useTagInput();
   const [dataLoading, setDataLoading] = useState(true);
@@ -82,6 +84,8 @@ export function EditBlog({ blogId }: EditBlogProps) {
 
   const status = watch("status");
   const content = watch("content");
+  const categoryId = watch("categoryId") ?? "";
+  const imageUrl = watch("imageUrl") ?? "";
   const [sourceFingerprint, setSourceFingerprint] = useState<string>("");
 
   const canHydrateDraft = useMemo(
@@ -163,7 +167,7 @@ export function EditBlog({ blogId }: EditBlogProps) {
         formData.append("description", data.description);
         formData.append("content", data.content);
         if (data.categoryId) formData.append("category", data.categoryId);
-        if (data.tags?.length) formData.append("tags", JSON.stringify(data.tags));
+        formData.append("tags", JSON.stringify(data.tags ?? []));
         if (data.readingTime) formData.append("readTime", `${data.readingTime} min read`);
         if (data.imageUrl) formData.append("imageUrl", data.imageUrl);
         if (data.metaTitle) formData.append("metaTitle", data.metaTitle);
@@ -190,6 +194,20 @@ export function EditBlog({ blogId }: EditBlogProps) {
   function handlePublish() {
     setValue("status", "published");
     handleSubmit(onSubmit)();
+  }
+
+  async function handleImageUpload(file: File | null) {
+    if (!file) return;
+    setIsUploadingImage(true);
+    try {
+      const uploadedUrl = await blogMediaService.uploadFeaturedImage(file, { blogId });
+      setValue("imageUrl", uploadedUrl, { shouldDirty: true, shouldValidate: true });
+      toast.success("Image uploaded successfully.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload image");
+    } finally {
+      setIsUploadingImage(false);
+    }
   }
 
   if (dataLoading) {
@@ -333,7 +351,7 @@ export function EditBlog({ blogId }: EditBlogProps) {
             </CardHeader>
             <CardContent>
               <Select
-                value={watch("categoryId")}
+                value={categoryId}
                 onValueChange={(v) => setValue("categoryId", v ?? "")}
               >
                 <SelectTrigger>
@@ -399,6 +417,27 @@ export function EditBlog({ blogId }: EditBlogProps) {
               <div className="space-y-2">
                 <Label htmlFor="imageUrl">Featured Image URL</Label>
                 <Input id="imageUrl" placeholder="https://..." {...register("imageUrl")} />
+                <div className="space-y-2">
+                  <Label htmlFor="imageUpload">Or upload from computer</Label>
+                  <Input
+                    id="imageUpload"
+                    type="file"
+                    accept="image/*"
+                    disabled={isUploadingImage}
+                    onChange={(e) => {
+                      const selected = e.target.files?.[0] ?? null;
+                      void handleImageUpload(selected);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {isUploadingImage
+                      ? "Uploading image..."
+                      : imageUrl
+                        ? "Uploaded image URL is filled above. You can still paste a different URL."
+                        : "Upload an image or paste a URL above."}
+                  </p>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="readingTime">Reading Time (min)</Label>
