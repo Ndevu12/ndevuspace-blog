@@ -12,7 +12,7 @@ A modern tech blog built with **Next.js 16**, **React 19**, and **Tailwind CSS v
 | UI | React 19, Tailwind CSS v4, shadcn/ui (base-nova) |
 | State | Zustand 5 |
 | Validation | Zod 4 |
-| Editor | Custom rich text editor |
+| Editor | [rich-text-editor-ndevu](https://www.npmjs.com/package/rich-text-editor-ndevu) |
 | Charts | Recharts |
 | Animations | Framer Motion |
 | Icons | Lucide React |
