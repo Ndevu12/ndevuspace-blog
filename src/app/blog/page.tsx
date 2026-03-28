@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { BlogPage } from "@/features/blog/BlogPage";
+import { BlogPage } from "@/features/blog";
 import { BlogListingSkeleton } from "@/components/shared/LoadingStates";
 import { homeMetadata } from "../../lib/seo/metadata";
 import {

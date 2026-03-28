@@ -5,7 +5,6 @@ import * as blogApi from "./blogService";
 import * as dummyBlogApi from "./dummyBlogService";
 
 type BlogApiContract = {
-  getRecentBlogs: typeof blogApi.getRecentBlogs;
   getBlogsPaginated: typeof blogApi.getBlogsPaginated;
   getBlogById: typeof blogApi.getBlogById;
   getBlogBySlug: typeof blogApi.getBlogBySlug;
@@ -20,7 +19,6 @@ const resolved: BlogApiContract = getClientPublicConfig().useDummyData
   ? dummyBlogApi
   : blogApi;
 
-export const getRecentBlogs = resolved.getRecentBlogs;
 export const getBlogsPaginated = resolved.getBlogsPaginated;
 export const getBlogById = resolved.getBlogById;
 export const getBlogBySlug = resolved.getBlogBySlug;

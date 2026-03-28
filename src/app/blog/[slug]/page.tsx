@@ -1,7 +1,10 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getBlogBySlug } from "@/features/blog/services/resolvedBlogService";
-import { BlogDetailPage } from "@/features/blog/BlogDetailPage";
+import {
+  getAllBlogCategories,
+  getBlogBySlug,
+} from "@/features/blog/services/resolvedBlogService";
+import { BlogDetailPage } from "@/features/blog";
 import { buildBlogPostMetadata, blogNotFoundMetadata } from "@/lib/seo/seo";
 
 interface BlogPostPageProps {
@@ -23,11 +26,14 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const post = await getBlogBySlug(slug);
+  const [post, categories] = await Promise.all([
+    getBlogBySlug(slug),
+    getAllBlogCategories(),
+  ]);
 
   if (!post) {
     notFound();
   }
 
-  return <BlogDetailPage post={post} />;
+  return <BlogDetailPage post={post} categories={categories} />;
 }

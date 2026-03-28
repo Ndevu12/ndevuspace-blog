@@ -1,13 +1,12 @@
 "use client";
 
-import { BlogPost } from "@/types/blog";
+import type { BlogCategory, BlogPost } from "@/types/blog";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { BlogSidebar } from "./components/BlogSidebar";
 import { ShareArticle } from "./components/ShareArticle";
 import { TableOfContents } from "./components/TableOfContents";
-import { CommentForm, CommentList } from "@/features/comments";
 import { useBlogDetailStore } from "./detailStore";
 import {
   getAuthorName,
@@ -38,24 +37,22 @@ import { toast } from "sonner";
 
 interface BlogDetailPageProps {
   post: BlogPost;
+  categories: BlogCategory[];
 }
 
-export function BlogDetailPage({ post }: BlogDetailPageProps) {
+export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
   const router = useRouter();
 
   // ─── Store ───
   const {
-    popularPosts,
     allTags,
     relatedPosts,
-    comments,
     liked,
     likeCount,
     currentUrl,
     initializePost,
     fetchSidebarData,
     toggleLike,
-    addComment,
     reset,
   } = useBlogDetailStore();
 
@@ -71,6 +68,17 @@ export function BlogDetailPage({ post }: BlogDetailPageProps) {
 
   const handleTagClick = (tag: string) => {
     router.push(`/blog?tag=${encodeURIComponent(tag)}`);
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    if (categoryId === "all") {
+      router.push("/blog");
+      return;
+    }
+    const cat = categories.find((c) => c.id === categoryId);
+    if (cat) {
+      router.push(`/blog?category=${encodeURIComponent(cat.name)}`);
+    }
   };
 
   const handleLike = async () => {
@@ -301,7 +309,10 @@ export function BlogDetailPage({ post }: BlogDetailPageProps) {
           <aside className="lg:w-1/5 space-y-8">
 
             <BlogSidebar
-              popularPosts={popularPosts}
+              categories={categories}
+              activeCategory={post.category?.id ?? "all"}
+              onCategoryChange={handleCategoryChange}
+              isSearchActive={false}
               tags={allTags}
               onTagClick={handleTagClick}
               activeTag={null}

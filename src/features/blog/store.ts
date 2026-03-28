@@ -18,8 +18,6 @@ interface BlogListingState {
   // Data
   blogs: BlogPost[];
   blogCategories: BlogCategory[];
-  featuredPost: BlogPost | null;
-  popularPosts: BlogPost[];
   allTags: string[];
 
   // Filters
@@ -87,8 +85,6 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
     // Initial state
     blogs: [],
     blogCategories: [],
-    featuredPost: null,
-    popularPosts: [],
     allTags: [],
     activeCategory: "all",
     activeTag: null,
@@ -112,10 +108,6 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
       const blogTags = blogs.flatMap((blog: BlogPost) => blog.tags || []);
       const uniqueTags = Array.from(new Set(blogTags.filter(Boolean)));
 
-      const popular = [...blogs]
-        .sort((a, b) => (b.likes || 0) - (a.likes || 0))
-        .slice(0, 3);
-
       // Check if there's a pending unresolved category name from URL params
       // (hydrateFromParams may have run before categories were loaded)
       const { activeCategory } = get();
@@ -135,8 +127,6 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
       set({
         blogs,
         blogCategories: categories,
-        featuredPost: blogs.length > 0 ? blogs[0] : null,
-        popularPosts: popular,
         allTags: uniqueTags,
         currentPage,
         hasMorePosts: hasMore,
@@ -199,37 +189,26 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         }
 
         if (data?.blogs) {
-          const isUnfiltered = activeCategory === "all" && !searchQuery.trim() && !activeTag;
-
           // Extract tags
           const blogTags = data.blogs.flatMap((blog: BlogPost) => blog.tags || []);
           const uniqueTags = Array.from(new Set(blogTags.filter(Boolean)));
-
-          // Popular posts (top 3 by likes)
-          const popular = [...data.blogs]
-            .sort((a, b) => (b.likes || 0) - (a.likes || 0))
-            .slice(0, 3);
 
           set({
             blogs: data.blogs,
             currentPage: data.currentPage || 1,
             hasMorePosts: data.hasMore || false,
-            featuredPost: isUnfiltered && data.blogs.length > 0 ? data.blogs[0] : null,
             allTags: uniqueTags,
-            popularPosts: popular,
             error: null,
           });
         } else {
           set({
             blogs: [],
-            popularPosts: [],
-            featuredPost: null,
             error: "No articles available.",
           });
         }
       } catch (error) {
         console.error("Error fetching blogs:", error);
-        set({ blogs: [], featuredPost: null, error: "Failed to load articles." });
+        set({ blogs: [], error: "Failed to load articles." });
       } finally {
         // Clear all loading states
         set({

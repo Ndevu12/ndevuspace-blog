@@ -3,7 +3,6 @@
 import { create } from "zustand";
 import type { BlogPost, BlogComment } from "@/types/blog";
 import {
-  getRecentBlogs,
   getBlogsByCategory,
   getBlogsPaginated,
   likeBlog,
@@ -13,7 +12,6 @@ import {
 
 interface BlogDetailState {
   // Sidebar data
-  popularPosts: BlogPost[];
   allTags: string[];
   relatedPosts: BlogPost[];
 
@@ -47,7 +45,6 @@ interface BlogDetailActions {
 }
 
 const initialState: BlogDetailState = {
-  popularPosts: [],
   allTags: [],
   relatedPosts: [],
   comments: [],
@@ -82,10 +79,7 @@ export const useBlogDetailStore = create<BlogDetailState & BlogDetailActions>(
       set({ sidebarLoading: true });
 
       try {
-        const [recentPosts, allBlogsData] = await Promise.all([
-          getRecentBlogs(3),
-          getBlogsPaginated(1, 20),
-        ]);
+        const allBlogsData = await getBlogsPaginated(1, 20);
 
         const blogTags = allBlogsData.blogs?.flatMap((blog) => blog.tags || []) || [];
         const uniqueTags = Array.from(
@@ -101,7 +95,6 @@ export const useBlogDetailStore = create<BlogDetailState & BlogDetailActions>(
         }
 
         set({
-          popularPosts: recentPosts,
           allTags: uniqueTags,
           relatedPosts,
           sidebarLoading: false,
@@ -109,7 +102,6 @@ export const useBlogDetailStore = create<BlogDetailState & BlogDetailActions>(
       } catch (error) {
         console.error("Error fetching blog detail data:", error);
         set({
-          popularPosts: [],
           allTags: [],
           relatedPosts: [],
           sidebarLoading: false,

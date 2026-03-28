@@ -58,9 +58,11 @@ export function TableOfContents({ className = "" }: TableOfContentsProps) {
   useEffect(() => {
     const articleContent = document.querySelector("[data-article-content]");
     if (!articleContent) {
-      setTocItems([]);
-      setActiveId("");
-      setHasCompletedInitialScan(true);
+      queueMicrotask(() => {
+        setTocItems([]);
+        setActiveId("");
+        setHasCompletedInitialScan(true);
+      });
       return;
     }
 
@@ -124,7 +126,7 @@ export function TableOfContents({ className = "" }: TableOfContentsProps) {
     headingObserverRef.current = null;
 
     if (tocItems.length === 0) {
-      setActiveId("");
+      queueMicrotask(() => setActiveId(""));
       return;
     }
 
@@ -133,7 +135,7 @@ export function TableOfContents({ className = "" }: TableOfContentsProps) {
       .filter((heading): heading is HTMLElement => heading !== null);
 
     if (headings.length === 0) {
-      setActiveId("");
+      queueMicrotask(() => setActiveId(""));
       return;
     }
 

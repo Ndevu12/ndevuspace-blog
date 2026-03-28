@@ -4,7 +4,6 @@ import { useMemo, useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { BlogCard } from "./components/BlogCard";
-import { FeaturedBlogCard } from "./components/FeaturedBlogCard";
 import { BlogSidebar } from "./components/BlogSidebar";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { BlogSearch } from "./components/BlogSearch";
@@ -19,8 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { BlogCardSkeleton, FeaturedBlogSkeleton } from "@/components/shared/LoadingStates";
-import { Loader2, Plus, Search, Sparkles, X } from "lucide-react";
+import { BlogCardSkeleton } from "@/components/shared/LoadingStates";
+import { Loader2, Plus, Search, X } from "lucide-react";
 import { useBlogUrlParams } from "@/hooks";
 import type { BlogCategory, PaginatedBlogsResponse } from "@/types/blog";
 
@@ -38,8 +37,6 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
   const {
     blogs,
     blogCategories,
-    featuredPost,
-    popularPosts,
     allTags,
     activeCategory,
     activeTag,
@@ -135,125 +132,87 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
     blogsLoading || categoryLoading || tagLoading || searchLoading;
 
   return (
-    <>
-      {/* Hero Banner */}
-      <section className="relative bg-background pt-32 pb-20">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                Tech{" "}
-              </span>
-              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                Insights
-              </span>
-            </h1>
-            <p className="text-muted-foreground max-w-3xl mx-auto text-lg leading-relaxed">
-              Exploring the world of web development, software engineering, and
-              digital innovation. Dive into articles that share knowledge,
-              experiences, and practical tips.
-            </p>
-          </div>
+    <main className="bg-background pt-28 md:pt-32">
+      {/* Search — above filters & listing; wired via useBlogUrlParams + store */}
+      <div className="max-w-6xl mx-auto px-4 pb-8 md:pb-10">
+        <BlogSearch onSearch={onSearch} searchQuery={searchQuery} />
+      </div>
 
-          <BlogSearch onSearch={onSearch} searchQuery={searchQuery} />
-        </div>
-      </section>
-
-      {/* Category Tabs */}
-      {categoriesLoading ? (
-        <div className="bg-muted/50 py-4 border-y border-border/50">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="flex justify-center py-2 gap-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-9 w-24 rounded-full" />
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="sticky top-16 z-10 backdrop-blur-sm">
-          {/* Search active indicator */}
-          {searchQuery.trim() && (
-            <div className="bg-primary/5 border-b border-primary/20 py-3">
-              <div className="max-w-6xl mx-auto px-4">
-                <div className="flex items-center justify-center gap-2 text-sm text-primary">
-                  <Search className="h-4 w-4" />
-                  <span>
-                    Searching for: &ldquo;<strong>{searchQuery}</strong>&rdquo;
-                  </span>
-                  <button
-                    onClick={onClearSearch}
-                    className="ml-2 text-primary/70 hover:text-primary underline"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <CategoryTabs
-            categories={blogCategories}
-            activeCategory={activeCategory}
-            onCategoryChange={onCategoryChange}
-            isSearchActive={!!searchQuery.trim()}
-          />
-
-          {/* Active Tag Indicator */}
-          {activeTag && (
-            <div className="max-w-6xl mx-auto px-4 mt-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  Filtering by tag:
+      {/* Sticky filters: category tabs only below lg (desktop uses sidebar categories) */}
+      <div className="sticky top-16 z-10 backdrop-blur-sm">
+        {searchQuery.trim() && (
+          <div className="bg-primary/5 border-b border-primary/20 py-3">
+            <div className="max-w-6xl mx-auto px-4">
+              <div className="flex items-center justify-center gap-2 text-sm text-primary">
+                <Search className="h-4 w-4" />
+                <span>
+                  Searching for: &ldquo;<strong>{searchQuery}</strong>&rdquo;
                 </span>
-                <Badge variant="default" className="gap-1">
-                  #{activeTag}
-                  <button
-                    onClick={onClearAllFilters}
-                    className="ml-1 hover:text-primary-foreground/80"
-                    title="Clear tag filter"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
+                <button
+                  onClick={onClearSearch}
+                  className="ml-2 text-primary/70 hover:text-primary underline"
+                >
+                  Clear
+                </button>
               </div>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Blog Content */}
-      <main className="max-w-6xl mx-auto px-4 py-12">
+        {categoriesLoading ? (
+          <div className="lg:hidden bg-muted/50 py-4 border-y border-border/50">
+            <div className="max-w-6xl mx-auto px-4">
+              <div className="flex justify-center py-2 gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-9 w-24 rounded-full" />
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="lg:hidden">
+            <CategoryTabs
+              categories={blogCategories}
+              activeCategory={activeCategory}
+              onCategoryChange={onCategoryChange}
+              isSearchActive={!!searchQuery.trim()}
+            />
+          </div>
+        )}
+
+        {activeTag && (
+          <div className="max-w-6xl mx-auto px-4 mt-4 pb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                Filtering by tag:
+              </span>
+              <Badge variant="default" className="gap-1">
+                #{activeTag}
+                <button
+                  onClick={onClearAllFilters}
+                  className="ml-1 hover:text-primary-foreground/80"
+                  title="Clear tag filter"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Content */}
           <div className="lg:w-3/4">
             {blogsLoading ? (
-              <div className="space-y-8">
-                <FeaturedBlogSkeleton />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <BlogCardSkeleton key={i} />
-                  ))}
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <BlogCardSkeleton key={i} />
+                ))}
               </div>
             ) : (
               <>
-                {/* Featured Article */}
-                {featuredPost &&
-                  activeCategory === "all" &&
-                  !searchQuery &&
-                  !activeTag && (
-                    <div className="mb-12">
-                      <h2 className="text-xl text-muted-foreground mb-4 flex items-center">
-                        <span className="inline-flex items-center justify-center w-6 h-6 bg-primary rounded-full mr-2">
-                          <Sparkles className="h-4 w-4 text-primary-foreground" />
-                        </span>
-                        FEATURED POST
-                      </h2>
-                      <FeaturedBlogCard post={featuredPost} />
-                    </div>
-                  )}
-
                 {/* Sort Options */}
                 <div className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
                   <div className="flex items-center gap-4">
@@ -359,14 +318,18 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
           {/* Sidebar */}
           <aside className="lg:w-1/4">
             <BlogSidebar
-              popularPosts={popularPosts}
+              categories={blogCategories}
+              activeCategory={activeCategory}
+              onCategoryChange={onCategoryChange}
+              isSearchActive={!!searchQuery.trim()}
+              hideCategoryNavUntilLg
               tags={allTags}
               onTagClick={onTagChange}
               activeTag={activeTag}
             />
           </aside>
         </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }
