@@ -29,10 +29,6 @@ function sortByNewest(posts: BlogPost[]): BlogPost[] {
   );
 }
 
-export async function getRecentBlogs(limit: number = 3): Promise<BlogPost[]> {
-  return sortByNewest(dummyBlogs).slice(0, limit);
-}
-
 export async function getBlogsPaginated(
   page: number = 1,
   limit: number = 10

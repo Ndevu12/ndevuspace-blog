@@ -25,20 +25,6 @@ function parsePaginatedBlogs(data: unknown): PaginatedBlogsResponse {
   };
 }
 
-export async function getRecentBlogs(limit: number = 3): Promise<BlogPost[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase.rpc("blog_public_list_recent", {
-    p_limit: limit,
-  });
-
-  if (error) {
-    throw new Error(error.message || "Failed to fetch recent blogs.");
-  }
-
-  const payload = assertRpcObject(data, "Invalid recent blogs response.");
-  return Array.isArray(payload.blogs) ? (payload.blogs as BlogPost[]) : [];
-}
-
 export async function getBlogsPaginated(
   page: number = 1,
   limit: number = 10

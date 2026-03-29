@@ -50,7 +50,10 @@ BEGIN
           FROM public.blog_tag_links l
           JOIN public.blog_tags t ON t.id = l.tag_id
           WHERE l.blog_id = b.id
-            AND lower(t.slug) = lower(v_tag_slug)
+            AND (
+              lower(t.slug) = lower(v_tag_slug)
+              OR lower(t.name) = lower(v_tag_slug)
+            )
         )
       )
       AND (
@@ -112,7 +115,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.blog_public_list_published(int, int, uuid, text, text, text) IS
-  'Public blog list RPC. Args: p_page int default 1 (>=1), p_limit int default 10 (clamped 1..100), p_category_id uuid default null, p_tag_slug text default null, p_search text default null, p_sort text default newest in {newest,oldest,popular}. Returns {"blogs":[blog_row_json...],"totalCount":int,"hasMore":bool,"currentPage":int,"totalPages":int,"pagination":{"page":int,"limit":int,"total":int,"has_more":bool}} for published posts only.';
+  'Public blog list RPC. Args: p_page int default 1 (>=1), p_limit int default 10 (clamped 1..100), p_category_id uuid default null, p_tag_slug text default null (matches blog_tags.slug or blog_tags.name, case-insensitive), p_search text default null, p_sort text default newest in {newest,oldest,popular}. Returns {"blogs":[blog_row_json...],"totalCount":int,"hasMore":bool,"currentPage":int,"totalPages":int,"pagination":{"page":int,"limit":int,"total":int,"has_more":bool}} for published posts only.';
 
 CREATE OR REPLACE FUNCTION public.blog_public_list_by_category(
   p_category_id uuid,
@@ -162,7 +165,7 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.blog_public_list_by_tag(text, int, int, text) IS
-  'Public tag list RPC. Args: p_tag_slug text, p_page int default 1, p_limit int default 10, p_sort text default newest in {newest,oldest,popular}. Returns the same paginated jsonb envelope as blog_public_list_published, scoped to published posts linked to the requested tag slug.';
+  'Public tag list RPC. Args: p_tag_slug text (tag slug or display name, case-insensitive), p_page int default 1, p_limit int default 10, p_sort text default newest in {newest,oldest,popular}. Returns the same paginated jsonb envelope as blog_public_list_published, scoped to published posts linked to the requested tag.';
 
 CREATE OR REPLACE FUNCTION public.blog_public_search(
   p_query text,

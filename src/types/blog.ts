@@ -317,16 +317,6 @@ export interface BlogMetadata {
   hasPreviousPage: boolean;
 }
 
-// ─── Page Props ───
-
-export interface BlogPageProps {
-  posts: BlogPost[];
-  featuredPost?: BlogPost;
-  categories: BlogCategory[];
-  popularPosts: BlogPost[];
-  metadata: BlogMetadata;
-}
-
 // ─── Server Response ───
 
 export interface BlogServerResponse {

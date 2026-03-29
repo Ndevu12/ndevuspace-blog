@@ -3,7 +3,6 @@ export { BlogDetailPage } from "./BlogDetailPage";
 export { useBlogListingStore } from "./store";
 export { useBlogDetailStore } from "./detailStore";
 export { BlogCard } from "./components/BlogCard";
-export { FeaturedBlogCard } from "./components/FeaturedBlogCard";
 export { BlogSearch } from "./components/BlogSearch";
 export { BlogSidebar } from "./components/BlogSidebar";
 export { CategoryTabs } from "./components/CategoryTabs";

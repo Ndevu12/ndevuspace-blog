@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useBlogListingStore } from "@/features/blog/store";
+import { useBlogListingStore } from "@/features/blog";
 
 /**
  * Hook that synchronises blog filter state (category, tag, search) with URL
