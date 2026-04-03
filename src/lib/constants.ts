@@ -5,7 +5,7 @@ const clientConfig = getClientPublicConfig();
 export const SITE_URL = clientConfig.siteUrl;
 
 // Portfolio site link (for "back to portfolio" nav)
-export const PORTFOLIO_URL = "https://www.ndevuspace.com";
+export const PORTFOLIO_URL = "https://me.ndevuspace.com";
 
 // Pagination defaults
 export const DEFAULT_PAGE_SIZE = 10;
