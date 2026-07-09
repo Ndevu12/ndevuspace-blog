@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useId } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { BlogCategory } from "@/types/blog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { LayoutGrid } from "lucide-react";
+import { SPRING_SNAPPY } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 export type CategoryTabsVariant = "horizontal" | "sidebar";
@@ -17,6 +19,27 @@ interface CategoryTabsProps {
   variant?: CategoryTabsVariant;
 }
 
+/**
+ * Active-state fill that glides between items via shared layout animation.
+ * Scoped by instance so multiple tab sets on one page never cross-animate.
+ */
+function ActiveIndicator({
+  layoutId,
+  className,
+}: {
+  layoutId: string | undefined;
+  className: string;
+}) {
+  return (
+    <motion.span
+      aria-hidden
+      layoutId={layoutId}
+      transition={SPRING_SNAPPY}
+      className={className}
+    />
+  );
+}
+
 export function CategoryTabs({
   categories,
   activeCategory,
@@ -26,6 +49,11 @@ export function CategoryTabs({
 }: CategoryTabsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(false);
+  const prefersReducedMotion = useReducedMotion();
+  const instanceId = useId();
+  const indicatorLayoutId = prefersReducedMotion
+    ? undefined
+    : `${instanceId}-active-category`;
 
   // All categories including "All Topics"
   const allCategories = useMemo(
@@ -82,18 +110,26 @@ export function CategoryTabs({
               type="button"
               onClick={() => onCategoryChange(categoryId)}
               className={cn(
-                "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                "relative flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 motion-safe:active:scale-[0.98]",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "text-primary-foreground"
                   : isSearchActive
                     ? "border border-border bg-muted/50 text-muted-foreground opacity-70"
                     : "border border-transparent text-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
               )}
             >
-              {categoryId === "all" && (
-                <LayoutGrid className="h-4 w-4 shrink-0" aria-hidden />
+              {isActive && (
+                <ActiveIndicator
+                  layoutId={indicatorLayoutId}
+                  className="absolute inset-0 rounded-lg bg-primary shadow-sm"
+                />
               )}
-              <span>{category.name}</span>
+              <span className="relative z-10 flex items-center gap-2">
+                {categoryId === "all" && (
+                  <LayoutGrid className="h-4 w-4 shrink-0" aria-hidden />
+                )}
+                <span>{category.name}</span>
+              </span>
             </button>
           );
         })}
@@ -120,18 +156,26 @@ export function CategoryTabs({
                   data-category={categoryId}
                   onClick={() => onCategoryChange(categoryId)}
                   className={cn(
-                    "flex flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-colors duration-200",
+                    "relative flex flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200 motion-safe:active:scale-[0.97]",
                     isActive
-                      ? "border-primary bg-primary text-primary-foreground shadow-[0_0_16px] shadow-primary/40"
+                      ? "border-transparent text-primary-foreground"
                       : isSearchActive
                         ? "border-border bg-muted text-muted-foreground opacity-60"
                         : "border-border bg-card/60 text-foreground hover:border-primary/50 hover:text-primary"
                   )}
                 >
-                  {categoryId === "all" && (
-                    <LayoutGrid className="h-4 w-4" aria-hidden />
+                  {isActive && (
+                    <ActiveIndicator
+                      layoutId={indicatorLayoutId}
+                      className="absolute inset-0 rounded-full bg-primary shadow-[0_0_16px] shadow-primary/40"
+                    />
                   )}
-                  {category.name}
+                  <span className="relative z-10 flex items-center gap-2">
+                    {categoryId === "all" && (
+                      <LayoutGrid className="h-4 w-4" aria-hidden />
+                    )}
+                    {category.name}
+                  </span>
                 </button>
               );
             })}

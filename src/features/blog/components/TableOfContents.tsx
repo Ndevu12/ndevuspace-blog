@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SPRING_SNAPPY } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 interface TocItem {
@@ -55,6 +57,11 @@ export function TableOfContents({ className = "" }: TableOfContentsProps) {
   const [hasCompletedInitialScan, setHasCompletedInitialScan] = useState(false);
   const mutationObserverRef = useRef<MutationObserver | null>(null);
   const headingObserverRef = useRef<IntersectionObserver | null>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const instanceId = useId();
+  const railLayoutId = prefersReducedMotion
+    ? undefined
+    : `${instanceId}-toc-rail`;
 
   useEffect(() => {
     const articleContent = document.querySelector("[data-article-content]");
@@ -218,13 +225,21 @@ export function TableOfContents({ className = "" }: TableOfContentsProps) {
               key={item.id}
               onClick={() => handleTocClick(item.id)}
               className={cn(
-                "block w-full border-l-2 py-1.5 text-left leading-snug transition-colors duration-200",
+                "relative block w-full border-l-2 border-border py-1.5 text-left leading-snug transition-colors duration-200",
                 item.level === 2 ? "pl-3.5" : "pl-6 text-xs",
                 activeId === item.id
-                  ? "border-primary font-medium text-primary"
-                  : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  ? "font-medium text-primary"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
+              {activeId === item.id && (
+                <motion.span
+                  aria-hidden
+                  layoutId={railLayoutId}
+                  transition={SPRING_SNAPPY}
+                  className="absolute -left-0.5 inset-y-0 w-0.5 bg-primary"
+                />
+              )}
               {item.text}
             </button>
           ))}

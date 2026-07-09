@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Tooltip,
   TooltipContent,
@@ -8,6 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Facebook, Twitter, Linkedin, Link2, Check } from "lucide-react";
 import { toast } from "sonner";
+import { DURATION } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 interface ShareArticleProps {
@@ -17,7 +19,7 @@ interface ShareArticleProps {
 }
 
 const shareButtonClasses =
-  "inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors duration-200 hover:border-primary hover:bg-primary/10 hover:text-primary";
+  "inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-all duration-200 hover:border-primary hover:bg-primary/10 hover:text-primary motion-safe:active:scale-90";
 
 export function ShareArticle({ title, url, className }: ShareArticleProps) {
   const [copied, setCopied] = useState(false);
@@ -82,11 +84,22 @@ export function ShareArticle({ title, url, className }: ShareArticleProps) {
                 aria-label="Copy link to clipboard"
                 className={shareButtonClasses}
               >
-                {copied ? (
-                  <Check className="h-4 w-4 text-emerald-500" />
-                ) : (
-                  <Link2 className="h-4 w-4" />
-                )}
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={copied ? "copied" : "copy"}
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ duration: DURATION.fast }}
+                    className="inline-flex"
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 text-emerald-500" />
+                    ) : (
+                      <Link2 className="h-4 w-4" />
+                    )}
+                  </motion.span>
+                </AnimatePresence>
               </button>
             }
           />

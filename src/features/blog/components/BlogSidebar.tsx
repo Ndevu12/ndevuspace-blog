@@ -68,6 +68,7 @@ export function BlogSidebar({
                 <button
                   key={`${tag}-${idx}`}
                   onClick={() => onTagClick?.(tag)}
+                  className="transition-transform duration-150 motion-safe:active:scale-95"
                 >
                   <Badge
                     variant={isActive ? "default" : "secondary"}
