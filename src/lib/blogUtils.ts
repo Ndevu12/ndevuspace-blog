@@ -1,6 +1,10 @@
 // Blog-specific utilities — ported from my-brand-nextjs/utils/blogUtils.ts
 
-import { DEFAULT_AUTHOR } from "./constants";
+import {
+  BLOG_PLACEHOLDER_IMAGE,
+  DEFAULT_AUTHOR,
+  DEFAULT_READ_TIME,
+} from "./constants";
 import type { Author, BlogPost } from "@/types/blog";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 
@@ -67,6 +71,29 @@ export function getSafeImageSrc(
   }
 
   return fallback;
+}
+
+/**
+ * Cover image src for a post, falling back to the shared blog placeholder.
+ */
+export function getPostImageSrc(post: Pick<BlogPost, "imageUrl">): string {
+  return getSafeImageSrc(post.imageUrl, BLOG_PLACEHOLDER_IMAGE);
+}
+
+/**
+ * Read time for a post, falling back to the shared default.
+ */
+export function getReadTime(post: Pick<BlogPost, "readTime">): string {
+  return post.readTime || DEFAULT_READ_TIME;
+}
+
+/**
+ * Unique, non-empty tags across a set of posts (insertion order preserved).
+ */
+export function getUniqueTags(posts: Pick<BlogPost, "tags">[]): string[] {
+  return Array.from(
+    new Set(posts.flatMap((post) => post.tags || []).filter(Boolean))
+  );
 }
 
 /**
