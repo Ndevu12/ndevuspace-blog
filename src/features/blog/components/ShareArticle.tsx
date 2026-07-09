@@ -19,7 +19,7 @@ interface ShareArticleProps {
 }
 
 const shareButtonClasses =
-  "inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-all duration-200 hover:border-primary hover:bg-primary/10 hover:text-primary motion-safe:active:scale-90";
+  "pressable inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-all duration-200 hover:border-primary hover:bg-primary/10 hover:text-primary";
 
 export function ShareArticle({ title, url, className }: ShareArticleProps) {
   const [copied, setCopied] = useState(false);
