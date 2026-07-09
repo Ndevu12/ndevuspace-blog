@@ -39,7 +39,7 @@ export function BlogCard({ post, variant = "default" }: BlogCardProps) {
         className={cn(
           "h-full gap-0 overflow-hidden py-0 transition-all duration-300",
           "group-hover:ring-primary/40 group-hover:shadow-[0_16px_40px_-18px] group-hover:shadow-primary/35",
-          "motion-safe:group-hover:-translate-y-0.5",
+          "motion-safe:group-hover:-translate-y-0.5 motion-safe:group-active:scale-[0.99]",
           featured && "md:grid md:grid-cols-2"
         )}
       >

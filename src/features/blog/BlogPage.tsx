@@ -2,6 +2,7 @@
 
 import { useMemo, useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
 import { BlogGrid, BlogGridSkeleton } from "./components/BlogGrid";
 import { BlogSidebar } from "./components/BlogSidebar";
@@ -20,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { Loader2, Plus, Search, SearchX, X } from "lucide-react";
+import { entrance } from "@/lib/motion";
 import { useBlogUrlParams } from "@/hooks";
 import type { BlogCategory, PaginatedBlogsResponse } from "@/types/blog";
 
@@ -60,6 +62,8 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
   // ─── URL-synced filter actions ───
   const { onCategoryChange, onTagChange, onSearch, onClearSearch, onClearAllFilters } =
     useBlogUrlParams();
+
+  const prefersReducedMotion = useReducedMotion();
 
   // Hydrate store from server data on mount (once)
   const hydrated = useRef(false);
@@ -143,9 +147,12 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
   return (
     <main className="bg-background pt-28 md:pt-32">
       {/* Search — above filters & listing; wired via useBlogUrlParams + store */}
-      <div className="max-w-6xl mx-auto px-4 pb-8 md:pb-10">
+      <motion.div
+        {...entrance(prefersReducedMotion)}
+        className="max-w-6xl mx-auto px-4 pb-8 md:pb-10"
+      >
         <BlogSearch onSearch={onSearch} searchQuery={searchQuery} />
-      </div>
+      </motion.div>
 
       {/* Sticky filters: category tabs only below lg (desktop uses sidebar categories) */}
       <div className="sticky top-16 z-10">
@@ -213,7 +220,10 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
           {/* Main Content */}
           <div className="lg:w-3/4">
             {/* Listing header: heading + count, sort control */}
-            <div className="mb-8 flex flex-col md:flex-row justify-between md:items-end gap-4">
+            <motion.div
+              {...entrance(prefersReducedMotion, 0.1)}
+              className="mb-8 flex flex-col md:flex-row justify-between md:items-end gap-4"
+            >
               <div className="flex items-center gap-4">
                 <SectionHeading
                   eyebrow="Journal"
@@ -249,7 +259,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            </motion.div>
 
             {/* Blog Grid */}
             {error ? (
