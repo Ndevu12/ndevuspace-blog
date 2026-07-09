@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useBlogListingStore } from "@/features/blog";
 
 /**
@@ -14,7 +14,6 @@ import { useBlogListingStore } from "@/features/blog";
  * URL — drop-in replacements for the raw store actions.
  */
 export function useBlogUrlParams() {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -28,20 +27,31 @@ export function useBlogUrlParams() {
     hydrateFromParams,
   } = useBlogListingStore();
 
-  // ── Hydrate store from URL params on mount ──────────────────────────────
+  // ── Hydrate store from URL params ────────────────────────────────────────
+  // Reads location.search in an effect (never during render) so the listing
+  // page stays fully prerenderable — a render-time useSearchParams() would
+  // force the whole tree to client-render behind the route Suspense fallback.
+  // popstate keeps back/forward navigation in sync.
   useEffect(() => {
-    const tagParam = searchParams.get("tag");
-    const categoryParam = searchParams.get("category");
-    const searchParam = searchParams.get("search");
+    const syncFromLocation = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tagParam = params.get("tag");
+      const categoryParam = params.get("category");
+      const searchParam = params.get("search");
 
-    if (tagParam || categoryParam || searchParam) {
-      hydrateFromParams({
-        tag: tagParam,
-        category: categoryParam,
-        search: searchParam,
-      });
-    }
-  }, [searchParams, hydrateFromParams]);
+      if (tagParam || categoryParam || searchParam) {
+        hydrateFromParams({
+          tag: tagParam,
+          category: categoryParam,
+          search: searchParam,
+        });
+      }
+    };
+
+    syncFromLocation();
+    window.addEventListener("popstate", syncFromLocation);
+    return () => window.removeEventListener("popstate", syncFromLocation);
+  }, [hydrateFromParams]);
 
   // ── Helper: push current filter state into the URL ──────────────────────
   const updateUrlParams = useCallback(

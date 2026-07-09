@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import type { BlogPost, BlogCategory } from "@/types/blog";
+import { getUniqueTags } from "@/lib/blogUtils";
 import {
   getAllBlogCategories,
   getBlogsPaginated,
@@ -29,6 +30,7 @@ interface BlogListingState {
   // Pagination
   currentPage: number;
   hasMorePosts: boolean;
+  totalCount: number;
 
   // Loading states
   blogsLoading: boolean;
@@ -92,6 +94,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
     sortBy: "newest",
     currentPage: 1,
     hasMorePosts: false,
+    totalCount: 0,
     blogsLoading: true,
     categoriesLoading: true,
     categoryLoading: false,
@@ -103,10 +106,9 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
     // ─── Hydration from Server ───
 
     hydrateFromServer: (data) => {
-      const { blogs, categories, hasMore, currentPage } = data;
+      const { blogs, categories, hasMore, currentPage, totalCount } = data;
 
-      const blogTags = blogs.flatMap((blog: BlogPost) => blog.tags || []);
-      const uniqueTags = Array.from(new Set(blogTags.filter(Boolean)));
+      const uniqueTags = getUniqueTags(blogs);
 
       // Check if there's a pending unresolved category name from URL params
       // (hydrateFromParams may have run before categories were loaded)
@@ -130,6 +132,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         allTags: uniqueTags,
         currentPage,
         hasMorePosts: hasMore,
+        totalCount,
         blogsLoading: false,
         categoriesLoading: false,
         activeCategory: resolvedCategory,
@@ -189,20 +192,18 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         }
 
         if (data?.blogs) {
-          // Extract tags
-          const blogTags = data.blogs.flatMap((blog: BlogPost) => blog.tags || []);
-          const uniqueTags = Array.from(new Set(blogTags.filter(Boolean)));
-
           set({
             blogs: data.blogs,
             currentPage: data.currentPage || 1,
             hasMorePosts: data.hasMore || false,
-            allTags: uniqueTags,
+            totalCount: data.totalCount ?? data.blogs.length,
+            allTags: getUniqueTags(data.blogs),
             error: null,
           });
         } else {
           set({
             blogs: [],
+            totalCount: 0,
             error: "No articles available.",
           });
         }
@@ -244,15 +245,13 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         }
 
         const allBlogs = [...blogs, ...response.blogs];
-        const mergedTags = Array.from(
-          new Set(allBlogs.flatMap((blog) => blog.tags || []).filter(Boolean))
-        );
 
         set({
           blogs: allBlogs,
           currentPage: response.currentPage,
           hasMorePosts: response.hasMore,
-          allTags: mergedTags,
+          totalCount: response.totalCount ?? allBlogs.length,
+          allTags: getUniqueTags(allBlogs),
         });
       } catch (error) {
         console.error("Failed to load more blogs:", error);
