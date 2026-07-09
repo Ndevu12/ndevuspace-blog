@@ -2,9 +2,9 @@
 
 import type { BlogCategory, BlogPost } from "@/types/blog";
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { BlogCard } from "./components/BlogCard";
 import { BlogSidebar } from "./components/BlogSidebar";
 import { ShareArticle } from "./components/ShareArticle";
 import { TableOfContents } from "./components/TableOfContents";
@@ -12,8 +12,9 @@ import { useBlogDetailStore } from "./detailStore";
 import {
   getAuthorName,
   getAuthorImage,
+  getPostImageSrc,
+  getReadTime,
   formatDate,
-  getSafeImageSrc,
 } from "@/lib/blogUtils";
 import { useRouter } from "next/navigation";
 import {
@@ -26,7 +27,6 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ReadingProgress } from "@/components/shared/ReadingProgress";
 import { Reveal } from "@/components/shared/Reveal";
@@ -107,7 +107,7 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
   }
 
   const authorName = getAuthorName(post.author);
-  const heroImageSrc = getSafeImageSrc(post.imageUrl, "/images/blog/placeholder.jpg");
+  const heroImageSrc = getPostImageSrc(post);
 
   return (
     <>
@@ -166,7 +166,7 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
             </span>
             <span className="text-meta flex items-center gap-1.5">
               <Clock className="h-4 w-4" />
-              {post.readTime || "5 min read"}
+              {getReadTime(post)}
             </span>
           </motion.div>
 
@@ -228,7 +228,11 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
                 <h3 className="text-eyebrow">Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {post.tags.map((tag) => (
-                    <button key={tag} onClick={() => handleTagClick(tag)}>
+                    <button
+                      key={tag}
+                      onClick={() => handleTagClick(tag)}
+                      className="pressable transition-transform duration-150"
+                    >
                       <Badge
                         variant="secondary"
                         className="cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors"
@@ -249,7 +253,7 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
                   variant={liked ? "default" : "outline"}
                   size="sm"
                   onClick={handleLike}
-                  className="gap-1.5 rounded-full transition-transform motion-safe:active:scale-95"
+                  className="pressable gap-1.5 rounded-full transition-transform"
                 >
                   <motion.span
                     animate={
@@ -280,34 +284,11 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
                   />
                   <div className="grid md:grid-cols-3 gap-6">
                     {relatedPosts.map((relatedPost) => (
-                      <Link
+                      <BlogCard
                         key={relatedPost.id}
-                        href={`/blog/${relatedPost.slug}`}
-                        className="group h-full"
-                      >
-                        <Card className="h-full gap-0 overflow-hidden py-0 transition-all duration-300 group-hover:ring-primary/40 group-hover:shadow-[0_16px_40px_-18px] group-hover:shadow-primary/35 motion-safe:group-hover:-translate-y-0.5">
-                          <div className="relative aspect-video overflow-hidden">
-                            <Image
-                              src={getSafeImageSrc(
-                                relatedPost.imageUrl,
-                                "/images/blog/placeholder.jpg"
-                              )}
-                              alt={relatedPost.title}
-                              fill
-                              sizes="(max-width: 768px) 100vw, 25vw"
-                              className="object-cover transition-transform duration-300 motion-safe:group-hover:scale-[1.03]"
-                            />
-                          </div>
-                          <CardContent className="flex flex-col gap-2 p-4">
-                            <h4 className="line-clamp-2 text-base font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
-                              {relatedPost.title}
-                            </h4>
-                            <p className="text-meta">
-                              {relatedPost.readTime || "5 min read"}
-                            </p>
-                          </CardContent>
-                        </Card>
-                      </Link>
+                        post={relatedPost}
+                        variant="compact"
+                      />
                     ))}
                   </div>
                 </section>

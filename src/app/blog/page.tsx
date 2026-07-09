@@ -1,7 +1,5 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { BlogPage } from "@/features/blog";
-import { BlogListingSkeleton } from "@/components/shared/LoadingStates";
 import { homeMetadata } from "../../lib/seo/metadata";
 import {
   getBlogsPaginated,
@@ -18,11 +16,9 @@ export default async function BlogListingPage() {
   ]);
 
   return (
-    <Suspense fallback={<BlogListingSkeleton />}>
-      <BlogPage
-        initialBlogs={initialBlogs}
-        initialCategories={initialCategories}
-      />
-    </Suspense>
+    <BlogPage
+      initialBlogs={initialBlogs}
+      initialCategories={initialCategories}
+    />
   );
 }
