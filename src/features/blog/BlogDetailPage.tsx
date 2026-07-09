@@ -2,8 +2,9 @@
 
 import type { BlogCategory, BlogPost } from "@/types/blog";
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { BlogCard } from "./components/BlogCard";
 import { BlogSidebar } from "./components/BlogSidebar";
 import { ShareArticle } from "./components/ShareArticle";
 import { TableOfContents } from "./components/TableOfContents";
@@ -11,8 +12,9 @@ import { useBlogDetailStore } from "./detailStore";
 import {
   getAuthorName,
   getAuthorImage,
+  getPostImageSrc,
+  getReadTime,
   formatDate,
-  getSafeImageSrc,
 } from "@/lib/blogUtils";
 import { useRouter } from "next/navigation";
 import {
@@ -25,14 +27,12 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Bookmark,
-  Calendar,
-  Clock,
-  Heart,
-} from "lucide-react";
+import { ReadingProgress } from "@/components/shared/ReadingProgress";
+import { Reveal } from "@/components/shared/Reveal";
+import { SectionHeading } from "@/components/shared/SectionHeading";
+import { fadeRise, fadeScale, staggerContainer, SPRING_SNAPPY } from "@/lib/motion";
+import { Calendar, Clock, Heart } from "lucide-react";
 import { toast } from "sonner";
 
 interface BlogDetailPageProps {
@@ -42,6 +42,7 @@ interface BlogDetailPageProps {
 
 export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
   const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
 
   // ─── Store ───
   const {
@@ -106,81 +107,75 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
   }
 
   const authorName = getAuthorName(post.author);
-  const heroImageSrc = getSafeImageSrc(post.imageUrl, "/images/blog/placeholder.jpg");
+  const heroImageSrc = getPostImageSrc(post);
 
   return (
     <>
-      {/* Article Header */}
+      <ReadingProgress />
+
+      {/* Article Header — staged reveal: breadcrumb → title block → meta → image → lede */}
       <section className="relative bg-card pt-24 pb-16">
-        <div className="max-w-4xl mx-auto px-4">
+        <motion.div
+          className="max-w-4xl mx-auto px-4"
+          variants={staggerContainer(0.09)}
+          initial={prefersReducedMotion ? false : "hidden"}
+          animate="visible"
+        >
           {/* Breadcrumb */}
-          <Breadcrumb className="mb-8">
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/blog">Home</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/blog">Blog</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="truncate max-w-[200px]">
-                  {post.title}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+          <motion.div variants={fadeRise}>
+            <Breadcrumb className="mb-8">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/blog">Blog</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="truncate max-w-[200px]">
+                    {post.title}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </motion.div>
 
-          {/* Category Badge */}
-          <div className="mb-6">
-            <Badge variant="secondary">
-              <Bookmark className="h-3 w-3 mr-1" />
+          {/* Category eyebrow + title */}
+          <motion.div variants={fadeRise}>
+            <p className="text-eyebrow mb-4">
               {post.category?.name || "Uncategorized"}
-            </Badge>
-          </div>
-
-          {/* Title */}
-          <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
-            {post.title}
-          </h1>
+            </p>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">
+              {post.title}
+            </h1>
+          </motion.div>
 
           {/* Meta Information */}
-          <div className="flex flex-wrap items-center gap-6 mb-8 text-muted-foreground">
+          <motion.div
+            variants={fadeRise}
+            className="flex flex-wrap items-center gap-6 mb-8"
+          >
             <div className="flex items-center">
               <Avatar className="h-12 w-12 border-2 border-primary mr-3">
                 <AvatarImage src={getAuthorImage(post)} alt={authorName} />
                 <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div>
-                <p className="font-medium text-foreground">{authorName}</p>
-              </div>
+              <p className="font-medium text-foreground">{authorName}</p>
             </div>
-            <div className="flex items-center text-sm gap-1">
+            <span className="text-meta flex items-center gap-1.5">
               <Calendar className="h-4 w-4" />
               {formatDate(post.createdAt)}
-            </div>
-            <div className="flex items-center text-sm gap-1">
+            </span>
+            <span className="text-meta flex items-center gap-1.5">
               <Clock className="h-4 w-4" />
-              {post.readTime || "5 min read"}
-            </div>
-            {/* Like Button */}
-            <Button
-              variant={liked ? "default" : "outline"}
-              size="sm"
-              onClick={handleLike}
-              className="gap-1"
-            >
-              <Heart
-                className={`h-4 w-4 ${liked ? "fill-current" : ""}`}
-              />
-              {likeCount}
-            </Button>
-          </div>
+              {getReadTime(post)}
+            </span>
+          </motion.div>
 
           {/* Featured Image */}
           {post.imageUrl?.trim() && (
-            <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden mb-8">
+            <motion.div
+              variants={fadeScale}
+              className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden mb-8"
+            >
               <Image
                 src={heroImageSrc}
                 alt={post.title}
@@ -188,16 +183,17 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
                 className="object-cover"
                 priority
               />
-            </div>
+            </motion.div>
           )}
 
           {/* Description */}
-          <div className="prose prose-lg dark:prose-invert max-w-none mb-8">
-            <p className="text-xl text-muted-foreground leading-relaxed">
-              {post.description}
-            </p>
-          </div>
-        </div>
+          <motion.p
+            variants={fadeRise}
+            className="text-xl text-foreground/80 leading-relaxed"
+          >
+            {post.description}
+          </motion.p>
+        </motion.div>
       </section>
 
       {/* Article Content */}
@@ -213,110 +209,106 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
             <TableOfContents />
           </div>
 
-          {/* Article Content */}
+          {/* Article Content — long-form reads on the open page, no card chrome */}
           <div className="lg:w-3/5">
-            <Card>
-              <CardContent className="p-8">
-                {/* Article Body */}
-                <div
-                  className="prose-blog prose prose-lg dark:prose-invert max-w-none"
-                  data-article-content
-                >
-                  {post.content ? (
-                    <div dangerouslySetInnerHTML={{ __html: post.content }} />
-                  ) : (
-                    <div className="space-y-6" />
-                  )}
-                </div>
-
-                {/* Tags */}
-                <div className="mt-8 pt-6 border-t border-border">
-                  <h3 className="text-lg font-semibold mb-4">Tags</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {post.tags.map((tag) => (
-                      <button key={tag} onClick={() => handleTagClick(tag)}>
-                        <Badge
-                          variant="secondary"
-                          className="cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors"
-                        >
-                          #{tag}
-                        </Badge>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Share Article */}
-                {currentUrl && (
-                  <ShareArticle
-                    title={post.title}
-                    url={currentUrl}
-                    className="mt-6 pt-6 border-t border-border"
-                    inline={true}
-                  />
+            <article>
+              <div
+                className="prose-blog prose prose-lg dark:prose-invert max-w-none"
+                data-article-content
+              >
+                {post.content ? (
+                  <div dangerouslySetInnerHTML={{ __html: post.content }} />
+                ) : (
+                  <div className="space-y-6" />
                 )}
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Comments Section */}
-            {/* <section className="mt-12 space-y-8">
-              <CommentList comments={comments} />
-              <CommentForm
-                blogId={post.id}
-                onCommentAdded={addComment}
-              />
-            </section> */}
-
-            {/* Related Posts */}
-            {relatedPosts.length > 0 && (
-              <section className="mt-12">
-                <h3 className="text-2xl font-bold mb-6">Related Articles</h3>
-                <div className="grid md:grid-cols-3 gap-6">
-                  {relatedPosts.map((relatedPost) => (
-                    <Link
-                      key={relatedPost.id}
-                      href={`/blog/${relatedPost.slug}`}
+              {/* Tags */}
+              <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6">
+                <h3 className="text-eyebrow">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {post.tags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => handleTagClick(tag)}
+                      className="pressable transition-transform duration-150"
                     >
-                      <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full">
-                        <div className="relative w-full h-40">
-                          <Image
-                            src={getSafeImageSrc(
-                              relatedPost.imageUrl,
-                              "/images/blog/placeholder.jpg"
-                            )}
-                            alt={relatedPost.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <CardContent className="p-4">
-                          <h4 className="font-semibold mb-2 overflow-hidden max-h-[3rem]">
-                            {relatedPost.title}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            {relatedPost.readTime || "5 min read"}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </Link>
+                      <Badge
+                        variant="secondary"
+                        className="cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors"
+                      >
+                        #{tag}
+                      </Badge>
+                    </button>
                   ))}
                 </div>
-              </section>
+              </div>
+
+              {/* Actions — share & appreciation in one cluster */}
+              <div className="mt-6 flex flex-wrap items-end justify-between gap-6 border-t border-border pt-6">
+                {currentUrl && (
+                  <ShareArticle title={post.title} url={currentUrl} />
+                )}
+                <Button
+                  variant={liked ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleLike}
+                  className="pressable gap-1.5 rounded-full transition-transform"
+                >
+                  <motion.span
+                    animate={
+                      liked && !prefersReducedMotion
+                        ? { scale: [1, 1.4, 1] }
+                        : { scale: 1 }
+                    }
+                    transition={SPRING_SNAPPY}
+                    className="inline-flex"
+                  >
+                    <Heart
+                      className={`h-4 w-4 ${liked ? "fill-current" : ""}`}
+                    />
+                  </motion.span>
+                  <span className="tabular-nums">{likeCount}</span>
+                </Button>
+              </div>
+            </article>
+
+            {/* Related Posts — revealed as the reader reaches them */}
+            {relatedPosts.length > 0 && (
+              <Reveal className="mt-14">
+                <section>
+                  <SectionHeading
+                    eyebrow="Keep reading"
+                    title="Related Articles"
+                    className="mb-6"
+                  />
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {relatedPosts.map((relatedPost) => (
+                      <BlogCard
+                        key={relatedPost.id}
+                        post={relatedPost}
+                        variant="compact"
+                      />
+                    ))}
+                  </div>
+                </section>
+              </Reveal>
             )}
           </div>
 
           {/* Right Sidebar */}
-          <aside className="lg:w-1/5 space-y-8">
-
-            <BlogSidebar
-              categories={categories}
-              activeCategory={post.category?.id ?? "all"}
-              onCategoryChange={handleCategoryChange}
-              isSearchActive={false}
-              tags={allTags}
-              onTagClick={handleTagClick}
-              activeTag={null}
-            />
+          <aside className="lg:w-1/5">
+            <div className="lg:sticky lg:top-24">
+              <BlogSidebar
+                categories={categories}
+                activeCategory={post.category?.id ?? "all"}
+                onCategoryChange={handleCategoryChange}
+                isSearchActive={false}
+                tags={allTags}
+                onTagClick={handleTagClick}
+                activeTag={null}
+              />
+            </div>
           </aside>
         </div>
       </main>

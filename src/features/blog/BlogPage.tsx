@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useEffect, useRef } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
-import { BlogCard } from "./components/BlogCard";
+import { BlogGrid, BlogGridSkeleton } from "./components/BlogGrid";
 import { BlogSidebar } from "./components/BlogSidebar";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { BlogSearch } from "./components/BlogSearch";
@@ -18,8 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { BlogCardSkeleton } from "@/components/shared/LoadingStates";
-import { Loader2, Plus, Search, X } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { SectionHeading } from "@/components/shared/SectionHeading";
+import { Loader2, Plus, Search, SearchX, X } from "lucide-react";
+import { getUniqueTags } from "@/lib/blogUtils";
+import { entrance } from "@/lib/motion";
 import { useBlogUrlParams } from "@/hooks";
 import type { BlogCategory, PaginatedBlogsResponse } from "@/types/blog";
 
@@ -31,7 +35,6 @@ export interface BlogPageProps {
 export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   // ─── Store ───
   const {
@@ -43,6 +46,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
     searchQuery,
     sortBy,
     hasMorePosts,
+    totalCount,
     blogsLoading,
     categoriesLoading,
     categoryLoading,
@@ -59,6 +63,8 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
   // ─── URL-synced filter actions ───
   const { onCategoryChange, onTagChange, onSearch, onClearSearch, onClearAllFilters } =
     useBlogUrlParams();
+
+  const prefersReducedMotion = useReducedMotion();
 
   // Hydrate store from server data on mount (once)
   const hydrated = useRef(false);
@@ -89,22 +95,48 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
     fetchFilteredBlogs();
   }, [activeCategory, activeTag, searchQuery, fetchFilteredBlogs]);
 
+  // Access-denied redirect notice — reads location.search in an effect so the
+  // page stays prerenderable (see useBlogUrlParams for the same constraint).
   useEffect(() => {
-    if (searchParams.get("accessDenied") !== "1") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("accessDenied") !== "1") {
       return;
     }
 
     toast.error("Access Denied");
 
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.delete("accessDenied");
-    const nextUrl = nextParams.size > 0 ? `${pathname}?${nextParams.toString()}` : pathname;
-    router.replace(nextUrl);
-  }, [pathname, router, searchParams]);
+    params.delete("accessDenied");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  }, [pathname, router]);
+
+  // ── First-paint data ──
+  // The store hydrates from the server payload in a post-mount effect; until
+  // then it is empty with blogsLoading=true. Render the server data directly
+  // during that window so the prerendered page and the initial visit/reload
+  // paint content instead of skeletons. URL-filtered visits briefly show the
+  // unfiltered set, then the matching fetch swaps in a skeleton.
+  const useServerData = blogsLoading && blogs.length === 0;
+
+  const displayBlogs = useServerData ? initialBlogs.blogs : blogs;
+  const displayTotalCount = useServerData ? initialBlogs.totalCount : totalCount;
+  const displayHasMore = useServerData ? initialBlogs.hasMore : hasMorePosts;
+  const displayCategories =
+    blogCategories.length > 0 ? blogCategories : initialCategories;
+  const displayTags = useMemo(
+    () => (allTags.length > 0 ? allTags : getUniqueTags(initialBlogs.blogs)),
+    [allTags, initialBlogs.blogs]
+  );
+
+  const isContentLoading =
+    (blogsLoading && !useServerData) ||
+    categoryLoading ||
+    tagLoading ||
+    searchLoading;
 
   // Sort posts client-side (derived state)
   const filteredPosts = useMemo(() => {
-    const posts = [...blogs];
+    const posts = [...displayBlogs];
 
     switch (sortBy) {
       case "oldest":
@@ -126,22 +158,30 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
     }
 
     return posts;
-  }, [blogs, sortBy]);
+  }, [displayBlogs, sortBy]);
 
-  const isContentLoading =
-    blogsLoading || categoryLoading || tagLoading || searchLoading;
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) || Boolean(activeTag) || activeCategory !== "all";
+
+  const showingMeta =
+    !isContentLoading && !error && filteredPosts.length > 0
+      ? `Showing ${filteredPosts.length} of ${displayTotalCount} ${displayTotalCount === 1 ? "post" : "posts"}`
+      : undefined;
 
   return (
     <main className="bg-background pt-28 md:pt-32">
       {/* Search — above filters & listing; wired via useBlogUrlParams + store */}
-      <div className="max-w-6xl mx-auto px-4 pb-8 md:pb-10">
+      <motion.div
+        {...entrance(prefersReducedMotion)}
+        className="max-w-6xl mx-auto px-4 pb-8 md:pb-10"
+      >
         <BlogSearch onSearch={onSearch} searchQuery={searchQuery} />
-      </div>
+      </motion.div>
 
       {/* Sticky filters: category tabs only below lg (desktop uses sidebar categories) */}
-      <div className="sticky top-16 z-10 backdrop-blur-sm">
+      <div className="sticky top-16 z-10">
         {searchQuery.trim() && (
-          <div className="bg-primary/5 border-b border-primary/20 py-3">
+          <div className="glass bg-primary/5 border-b border-primary/20 py-3">
             <div className="max-w-6xl mx-auto px-4">
               <div className="flex items-center justify-center gap-2 text-sm text-primary">
                 <Search className="h-4 w-4" />
@@ -159,8 +199,8 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
           </div>
         )}
 
-        {categoriesLoading ? (
-          <div className="lg:hidden bg-muted/50 py-4 border-y border-border/50">
+        {categoriesLoading && displayCategories.length === 0 ? (
+          <div className="lg:hidden glass py-4 border-y border-border/60">
             <div className="max-w-6xl mx-auto px-4">
               <div className="flex justify-center py-2 gap-2">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -172,7 +212,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
         ) : (
           <div className="lg:hidden">
             <CategoryTabs
-              categories={blogCategories}
+              categories={displayCategories}
               activeCategory={activeCategory}
               onCategoryChange={onCategoryChange}
               isSearchActive={!!searchQuery.trim()}
@@ -183,9 +223,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
         {activeTag && (
           <div className="max-w-6xl mx-auto px-4 mt-4 pb-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                Filtering by tag:
-              </span>
+              <span className="text-meta">Filtering by tag:</span>
               <Badge variant="default" className="gap-1">
                 #{activeTag}
                 <button
@@ -205,128 +243,120 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Content */}
           <div className="lg:w-3/4">
-            {blogsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <BlogCardSkeleton key={i} />
-                ))}
+            {/* Listing header: heading + count, sort control */}
+            <motion.div
+              {...entrance(prefersReducedMotion, 0.1)}
+              className="mb-8 flex flex-col md:flex-row justify-between md:items-end gap-4"
+            >
+              <div className="flex items-center gap-4">
+                <SectionHeading
+                  eyebrow="Journal"
+                  title={searchQuery ? "Search Results" : "Latest Articles"}
+                  meta={showingMeta}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={onClearSearch}
+                    className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                    Clear
+                  </button>
+                )}
               </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-meta">Sort by</span>
+                <Select
+                  value={sortBy}
+                  onValueChange={(value) =>
+                    setSortBy(value as "newest" | "oldest" | "popular")
+                  }
+                >
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="oldest">Oldest First</SelectItem>
+                    <SelectItem value="popular">Most Popular</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </motion.div>
+
+            {/* Blog Grid */}
+            {error ? (
+              <EmptyState
+                icon={<span className="text-6xl">&#x26A0;&#xFE0F;</span>}
+                title={error}
+                description="Please try a different category or clear your search."
+                actionLabel="Clear and view all articles"
+                onAction={onClearAllFilters}
+              />
+            ) : isContentLoading ? (
+              <BlogGridSkeleton />
+            ) : filteredPosts.length === 0 ? (
+              <EmptyState
+                icon={<SearchX className="h-10 w-10" />}
+                title="No articles found"
+                description={
+                  hasActiveFilters
+                    ? "Nothing matches the current filters."
+                    : "No articles have been published yet — check back soon."
+                }
+                actionLabel={
+                  hasActiveFilters ? "Clear and view all articles" : undefined
+                }
+                onAction={hasActiveFilters ? onClearAllFilters : undefined}
+              />
             ) : (
               <>
-                {/* Sort Options */}
-                <div className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-bold flex items-center">
-                      <span className="inline-block w-1 h-8 bg-primary rounded-sm mr-2" />
-                      {searchQuery
-                        ? `Search Results (${filteredPosts.length})`
-                        : "Latest Articles"}
-                    </h2>
-                    {searchQuery && (
-                      <button
-                        onClick={onClearSearch}
-                        className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
-                      >
-                        <X className="h-4 w-4" />
-                        Clear
-                      </button>
-                    )}
-                  </div>
+                <BlogGrid
+                  posts={filteredPosts}
+                  featureFirst={!hasActiveFilters}
+                />
 
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground">
-                      Sort by:
-                    </span>
-                    <Select
-                      value={sortBy}
-                      onValueChange={(value) =>
-                        setSortBy(value as "newest" | "oldest" | "popular")
-                      }
-                    >
-                      <SelectTrigger className="w-[160px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="newest">Newest First</SelectItem>
-                        <SelectItem value="oldest">Oldest First</SelectItem>
-                        <SelectItem value="popular">Most Popular</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Blog Grid */}
-                {error ? (
-                  <div className="text-center py-12">
-                    <div className="text-6xl mb-4">&#x26A0;&#xFE0F;</div>
-                    <h3 className="text-xl font-bold mb-2">{error}</h3>
-                    <p className="text-muted-foreground">
-                      Please try a different category or clear your search.
-                    </p>
+                {/* Load More Button */}
+                {displayHasMore && (
+                  <div className="my-12 text-center">
                     <Button
-                      variant="link"
-                      className="mt-4 text-primary"
-                      onClick={onClearAllFilters}
+                      onClick={loadMorePosts}
+                      disabled={loadingMore}
+                      size="lg"
                     >
-                      Clear and view all articles
+                      {loadingMore ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Load More
+                        </>
+                      )}
                     </Button>
                   </div>
-                ) : (
-                  <>
-                    {isContentLoading ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                          <BlogCardSkeleton key={i} />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {filteredPosts.map((post) => (
-                          <BlogCard key={post.id} post={post} />
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Load More Button */}
-                    {hasMorePosts && !isContentLoading && (
-                      <div className="my-12 text-center">
-                        <Button
-                          onClick={loadMorePosts}
-                          disabled={loadingMore}
-                          size="lg"
-                        >
-                          {loadingMore ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Loading...
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="mr-2 h-4 w-4" />
-                              Load More
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    )}
-                  </>
                 )}
               </>
             )}
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar — sticky on desktop so it tracks the scroll */}
           <aside className="lg:w-1/4">
-            <BlogSidebar
-              categories={blogCategories}
-              activeCategory={activeCategory}
-              onCategoryChange={onCategoryChange}
-              isSearchActive={!!searchQuery.trim()}
-              hideCategoryNavUntilLg
-              tags={allTags}
-              onTagClick={onTagChange}
-              activeTag={activeTag}
-            />
+            <div className="lg:sticky lg:top-24">
+              <BlogSidebar
+                categories={displayCategories}
+                activeCategory={activeCategory}
+                onCategoryChange={onCategoryChange}
+                isSearchActive={!!searchQuery.trim()}
+                hideCategoryNavUntilLg
+                tags={displayTags}
+                onTagClick={onTagChange}
+                activeTag={activeTag}
+              />
+            </div>
           </aside>
         </div>
       </div>

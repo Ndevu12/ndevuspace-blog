@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SPRING_SNAPPY } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 interface TocItem {
   id: string;
@@ -54,6 +57,11 @@ export function TableOfContents({ className = "" }: TableOfContentsProps) {
   const [hasCompletedInitialScan, setHasCompletedInitialScan] = useState(false);
   const mutationObserverRef = useRef<MutationObserver | null>(null);
   const headingObserverRef = useRef<IntersectionObserver | null>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const instanceId = useId();
+  const railLayoutId = prefersReducedMotion
+    ? undefined
+    : `${instanceId}-toc-rail`;
 
   useEffect(() => {
     const articleContent = document.querySelector("[data-article-content]");
@@ -172,86 +180,94 @@ export function TableOfContents({ className = "" }: TableOfContentsProps) {
 
   if (!hasCompletedInitialScan) {
     return (
-      <Card className={`sticky top-24 ${className}`}>
-        <CardHeader className="pb-2">
-          <h3 className="font-bold flex items-center">
-            <span className="inline-block w-1 h-8 bg-primary rounded-sm mr-2" />
-            Table of Contents
-          </h3>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Loading table of contents...
-          </p>
-        </CardContent>
-      </Card>
+      <TocShell className={className}>
+        <p className="text-sm text-muted-foreground">
+          Loading table of contents...
+        </p>
+      </TocShell>
     );
   }
 
   if (tocItems.length === 0) {
     return (
-      <Card className={`sticky top-24 ${className}`}>
-        <CardHeader className="pb-2">
-          <h3 className="font-bold flex items-center">
-            <span className="inline-block w-1 h-8 bg-primary rounded-sm mr-2" />
-            Table of Contents
-          </h3>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">No sections available.</p>
-        </CardContent>
-      </Card>
+      <TocShell className={className}>
+        <p className="text-sm text-muted-foreground">No sections available.</p>
+      </TocShell>
     );
   }
 
   return (
-    <Card className={`sticky top-24 ${className}`}>
+    <TocShell
+      className={className}
+      action={
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          aria-label="Toggle table of contents"
+        >
+          {isCollapsed ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronUp className="h-4 w-4" />
+          )}
+        </Button>
+      }
+    >
+      <ScrollArea className={isCollapsed ? "hidden lg:block" : "block"}>
+        <nav
+          aria-label="Table of contents"
+          className="space-y-0.5 text-[13px] max-h-[60vh]"
+        >
+          {tocItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => handleTocClick(item.id)}
+              className={cn(
+                "relative block w-full border-l-2 border-border py-1.5 text-left leading-snug transition-colors duration-200",
+                item.level === 2 ? "pl-3.5" : "pl-6 text-xs",
+                activeId === item.id
+                  ? "font-medium text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {activeId === item.id && (
+                <motion.span
+                  aria-hidden
+                  layoutId={railLayoutId}
+                  transition={SPRING_SNAPPY}
+                  className="absolute -left-0.5 inset-y-0 w-0.5 bg-primary"
+                />
+              )}
+              {item.text}
+            </button>
+          ))}
+        </nav>
+      </ScrollArea>
+    </TocShell>
+  );
+}
+
+/** Shared card frame for every TOC state (loading, empty, populated). */
+function TocShell({
+  className,
+  action,
+  children,
+}: {
+  className?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className={cn("sticky top-24", className)}>
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <h3 className="font-bold flex items-center">
-            <span className="inline-block w-1 h-8 bg-primary rounded-sm mr-2" />
-            Table of Contents
-          </h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            aria-label="Toggle table of contents"
-          >
-            {isCollapsed ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronUp className="h-4 w-4" />
-            )}
-          </Button>
+        <div className="flex items-center justify-between">
+          <h3 className="text-eyebrow">On this page</h3>
+          {action}
         </div>
       </CardHeader>
-      <CardContent>
-        <ScrollArea
-          className={`${isCollapsed ? "hidden lg:block" : "block"}`}
-        >
-          <nav className="space-y-1 text-sm max-h-[60vh]">
-            {tocItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleTocClick(item.id)}
-                className={`
-                  block w-full text-left py-2 border-l-2 transition-all duration-200
-                  ${item.level === 2 ? "pl-4" : "pl-6 text-xs"}
-                  ${
-                    activeId === item.id
-                      ? "text-primary border-primary bg-primary/10"
-                      : "text-muted-foreground border-border hover:text-primary hover:border-primary"
-                  }
-                `}
-              >
-                {item.text}
-              </button>
-            ))}
-          </nav>
-        </ScrollArea>
-      </CardContent>
+      <CardContent>{children}</CardContent>
     </Card>
   );
 }
