@@ -29,6 +29,7 @@ interface BlogListingState {
   // Pagination
   currentPage: number;
   hasMorePosts: boolean;
+  totalCount: number;
 
   // Loading states
   blogsLoading: boolean;
@@ -92,6 +93,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
     sortBy: "newest",
     currentPage: 1,
     hasMorePosts: false,
+    totalCount: 0,
     blogsLoading: true,
     categoriesLoading: true,
     categoryLoading: false,
@@ -103,7 +105,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
     // ─── Hydration from Server ───
 
     hydrateFromServer: (data) => {
-      const { blogs, categories, hasMore, currentPage } = data;
+      const { blogs, categories, hasMore, currentPage, totalCount } = data;
 
       const blogTags = blogs.flatMap((blog: BlogPost) => blog.tags || []);
       const uniqueTags = Array.from(new Set(blogTags.filter(Boolean)));
@@ -130,6 +132,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         allTags: uniqueTags,
         currentPage,
         hasMorePosts: hasMore,
+        totalCount,
         blogsLoading: false,
         categoriesLoading: false,
         activeCategory: resolvedCategory,
@@ -197,12 +200,14 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
             blogs: data.blogs,
             currentPage: data.currentPage || 1,
             hasMorePosts: data.hasMore || false,
+            totalCount: data.totalCount ?? data.blogs.length,
             allTags: uniqueTags,
             error: null,
           });
         } else {
           set({
             blogs: [],
+            totalCount: 0,
             error: "No articles available.",
           });
         }
@@ -252,6 +257,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
           blogs: allBlogs,
           currentPage: response.currentPage,
           hasMorePosts: response.hasMore,
+          totalCount: response.totalCount ?? allBlogs.length,
           allTags: mergedTags,
         });
       } catch (error) {

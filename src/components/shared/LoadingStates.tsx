@@ -2,24 +2,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 /**
- * Blog card skeleton for loading states
+ * Blog card skeleton — mirrors BlogCard's cover/title/excerpt/footer anatomy
  */
 export function BlogCardSkeleton() {
   return (
-    <Card className="overflow-hidden">
-      <Skeleton className="h-48 w-full rounded-none" />
-      <CardHeader className="space-y-2">
-        <Skeleton className="h-4 w-20" />
+    <Card className="h-full gap-0 overflow-hidden py-0">
+      <Skeleton className="aspect-video w-full rounded-none" />
+      <CardContent className="flex flex-col gap-3 p-5">
         <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-3/4" />
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <div className="flex items-center gap-2 pt-2">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+        <div className="flex items-center justify-between border-t border-border pt-4">
+          <div className="flex items-center gap-2.5">
+            <Skeleton className="h-7 w-7 rounded-full" />
+            <Skeleton className="h-4 w-24" />
+          </div>
           <Skeleton className="h-8 w-8 rounded-full" />
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-20 ml-auto" />
         </div>
       </CardContent>
     </Card>

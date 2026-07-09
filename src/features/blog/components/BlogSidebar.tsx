@@ -40,10 +40,7 @@ export function BlogSidebar({
         >
         <Card>
           <CardHeader>
-            <h3 className="font-bold flex items-center">
-              <span className="inline-block w-1 h-8 bg-primary rounded-sm mr-2" />
-              Categories
-            </h3>
+            <h3 className="text-eyebrow">Categories</h3>
           </CardHeader>
           <CardContent>
             <CategoryTabs
@@ -61,10 +58,7 @@ export function BlogSidebar({
       {/* Topic Cloud */}
       <Card>
         <CardHeader>
-          <h3 className="font-bold flex items-center">
-            <span className="inline-block w-1 h-8 bg-primary rounded-sm mr-2" />
-            Topic Cloud
-          </h3>
+          <h3 className="text-eyebrow">Topic Cloud</h3>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">

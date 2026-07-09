@@ -53,37 +53,12 @@
   --color-brand-light: var(--brand-light);
   --color-brand-dark: var(--brand-dark);
 
-  /* Custom animations */
-  --animate-fade-in: fade-in 0.8s ease forwards;
-  --animate-slide-in: slide-in 0.8s ease forwards;
-  --animate-scale-up: scale-up 0.8s ease forwards;
-  --animate-float: float 3s ease-in-out infinite;
-  --animate-modal-in: modal-in 0.3s ease-out forwards;
-  --animate-modal-out: modal-out 0.3s ease-in forwards;
+  /* Subtle pulse for "new" indicators */
+  --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
 
-  @keyframes fade-in {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
-  }
-  @keyframes slide-in {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes scale-up {
-    0% { opacity: 0; transform: scale(0.9); }
-    100% { opacity: 1; transform: scale(1); }
-  }
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-  }
-  @keyframes modal-in {
-    0% { opacity: 0; transform: scale(0.95); }
-    100% { opacity: 1; transform: scale(1); }
-  }
-  @keyframes modal-out {
-    0% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(0.95); }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
   }
 }
 
@@ -121,9 +96,6 @@
   --chart-5: #1e3a8a;
 
   --radius: 0.625rem;
-
-  /* Grid pattern */
-  --grid: #cbd5e1;
 
   /* Sidebar — light */
   --sidebar: #ffffff;
@@ -169,9 +141,6 @@
   --chart-4: #1d4ed8;
   --chart-5: #1e40af;
 
-  /* Grid pattern */
-  --grid: #1e1e2a;
-
   /* Sidebar — dark */
   --sidebar: #111118;
   --sidebar-foreground: #f1f5f9;
@@ -200,27 +169,40 @@
     scroll-behavior: smooth;
   }
 
-  /* Responsive typography — aligned with main ndevuspace site */
+  /*
+   * Typography roles — modest element defaults so semantic headings never
+   * leak hero sizing into components; hero scale is opted into per usage.
+   * Body copy keeps full foreground contrast; muted is reserved for metadata.
+   */
   h1 {
-    @apply text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight;
+    @apply text-3xl md:text-4xl font-bold leading-tight tracking-tight;
   }
   h2 {
-    @apply text-3xl md:text-4xl lg:text-5xl font-bold leading-tight;
+    @apply text-2xl md:text-3xl font-bold leading-tight tracking-tight;
   }
   h3 {
-    @apply text-2xl md:text-3xl font-semibold;
+    @apply text-xl font-semibold tracking-tight;
   }
   h4 {
-    @apply text-xl md:text-2xl font-semibold;
+    @apply text-lg font-semibold;
+  }
+  h1, h2, h3, h4 {
+    text-wrap: balance;
   }
   p {
-    @apply text-muted-foreground leading-relaxed;
+    @apply leading-relaxed;
   }
 
-  /* Selection styling */
+  /* Selection styling — theme-aware, readable in both modes */
   ::selection {
-    background: rgba(59, 130, 246, 0.3);
-    color: #fff;
+    background: color-mix(in oklab, var(--primary) 25%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html,
+    body {
+      scroll-behavior: auto;
+    }
   }
 
   /* Custom scrollbar */
@@ -244,71 +226,25 @@
 
 /* ─── Utility Classes ─── */
 @layer utilities {
-  /* Text gradient */
-  .text-gradient {
-    @apply bg-gradient-to-r from-blue-400 via-purple-400 to-blue-500 bg-clip-text text-transparent;
-  }
-
-  /* Glass morphism */
+  /* Glass morphism — frosted surface over page content; borders stay contextual */
   .glass {
-    @apply bg-gray-100/80 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10;
+    @apply bg-background/70 backdrop-blur-md;
   }
 
-  /* Glow effects */
-  .glow {
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.3);
-  }
-  .glow-hover:hover {
-    box-shadow: 0 0 60px rgba(59, 130, 246, 0.4);
+  /* Glass strip over imagery — dark scrim regardless of theme */
+  .glass-scrim {
+    @apply bg-black/45 backdrop-blur-md border border-white/15 text-white/95;
   }
 
-  /* Background patterns */
-  .bg-grid {
-    background-image: linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px);
-    background-size: 60px 60px;
+  /*
+   * Type roles (shared across public pages):
+   * eyebrow — mono section label; meta — mono metadata line.
+   */
+  .text-eyebrow {
+    @apply font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-primary;
   }
-
-  .dark .bg-grid {
-    background-image: linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px);
-  }
-
-  /* Grid pattern with better visibility */
-  .bg-grid-subtle {
-    background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px),
-                      linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
-    background-size: 4rem 4rem;
-    opacity: 0.25;
-  }
-
-  .bg-dots {
-    background-image: radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px);
-    background-size: 30px 30px;
-  }
-
-  .dark .bg-dots {
-    background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
-  }
-
-  /* Scrollbar hide */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Section fade-in animation */
-  .section-fade {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-  }
-  .section-fade.visible {
-    opacity: 1;
-    transform: translateY(0);
+  .text-meta {
+    @apply font-mono text-xs tracking-wide text-muted-foreground;
   }
 }
 
@@ -316,8 +252,8 @@
 @layer components {
   .prose-blog {
     @apply prose prose-lg max-w-none;
-    @apply prose-headings:text-foreground prose-headings:font-bold;
-    @apply prose-p:text-muted-foreground prose-p:leading-relaxed;
+    @apply prose-headings:text-foreground prose-headings:font-bold prose-headings:tracking-tight;
+    @apply prose-p:text-foreground/90 prose-p:leading-relaxed;
     @apply prose-a:text-brand prose-a:underline prose-a:font-medium;
     @apply prose-strong:text-foreground prose-strong:font-semibold;
     @apply prose-blockquote:border-l-4 prose-blockquote:border-brand prose-blockquote:italic prose-blockquote:text-muted-foreground;
@@ -325,7 +261,7 @@
     @apply prose-pre:bg-muted prose-pre:text-foreground prose-pre:rounded-lg prose-pre:overflow-auto prose-pre:text-sm;
     @apply prose-img:rounded-lg prose-img:my-8;
     @apply prose-hr:border-border;
-    @apply prose-li:text-muted-foreground;
+    @apply prose-li:text-foreground/90;
     @apply prose-ul:list-disc prose-ol:list-decimal;
   }
 }
