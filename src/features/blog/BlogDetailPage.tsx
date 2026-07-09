@@ -4,6 +4,7 @@ import type { BlogCategory, BlogPost } from "@/types/blog";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { BlogSidebar } from "./components/BlogSidebar";
 import { ShareArticle } from "./components/ShareArticle";
 import { TableOfContents } from "./components/TableOfContents";
@@ -28,7 +29,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ReadingProgress } from "@/components/shared/ReadingProgress";
+import { Reveal } from "@/components/shared/Reveal";
 import { SectionHeading } from "@/components/shared/SectionHeading";
+import { fadeRise, fadeScale, staggerContainer, SPRING_SNAPPY } from "@/lib/motion";
 import { Calendar, Clock, Heart } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,6 +42,7 @@ interface BlogDetailPageProps {
 
 export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
   const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
 
   // ─── Store ───
   const {
@@ -109,36 +113,46 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
     <>
       <ReadingProgress />
 
-      {/* Article Header */}
+      {/* Article Header — staged reveal: breadcrumb → title block → meta → image → lede */}
       <section className="relative bg-card pt-24 pb-16">
-        <div className="max-w-4xl mx-auto px-4">
+        <motion.div
+          className="max-w-4xl mx-auto px-4"
+          variants={staggerContainer(0.09)}
+          initial={prefersReducedMotion ? false : "hidden"}
+          animate="visible"
+        >
           {/* Breadcrumb */}
-          <Breadcrumb className="mb-8">
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/blog">Blog</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="truncate max-w-[200px]">
-                  {post.title}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+          <motion.div variants={fadeRise}>
+            <Breadcrumb className="mb-8">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/blog">Blog</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="truncate max-w-[200px]">
+                    {post.title}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </motion.div>
 
-          {/* Category eyebrow */}
-          <p className="text-eyebrow mb-4">
-            {post.category?.name || "Uncategorized"}
-          </p>
-
-          {/* Title */}
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">
-            {post.title}
-          </h1>
+          {/* Category eyebrow + title */}
+          <motion.div variants={fadeRise}>
+            <p className="text-eyebrow mb-4">
+              {post.category?.name || "Uncategorized"}
+            </p>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">
+              {post.title}
+            </h1>
+          </motion.div>
 
           {/* Meta Information */}
-          <div className="flex flex-wrap items-center gap-6 mb-8">
+          <motion.div
+            variants={fadeRise}
+            className="flex flex-wrap items-center gap-6 mb-8"
+          >
             <div className="flex items-center">
               <Avatar className="h-12 w-12 border-2 border-primary mr-3">
                 <AvatarImage src={getAuthorImage(post)} alt={authorName} />
@@ -154,11 +168,14 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
               <Clock className="h-4 w-4" />
               {post.readTime || "5 min read"}
             </span>
-          </div>
+          </motion.div>
 
           {/* Featured Image */}
           {post.imageUrl?.trim() && (
-            <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden mb-8">
+            <motion.div
+              variants={fadeScale}
+              className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden mb-8"
+            >
               <Image
                 src={heroImageSrc}
                 alt={post.title}
@@ -166,14 +183,17 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
                 className="object-cover"
                 priority
               />
-            </div>
+            </motion.div>
           )}
 
           {/* Description */}
-          <p className="text-xl text-foreground/80 leading-relaxed">
+          <motion.p
+            variants={fadeRise}
+            className="text-xl text-foreground/80 leading-relaxed"
+          >
             {post.description}
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
       </section>
 
       {/* Article Content */}
@@ -229,55 +249,69 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
                   variant={liked ? "default" : "outline"}
                   size="sm"
                   onClick={handleLike}
-                  className="gap-1.5 rounded-full"
+                  className="gap-1.5 rounded-full transition-transform motion-safe:active:scale-95"
                 >
-                  <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
+                  <motion.span
+                    animate={
+                      liked && !prefersReducedMotion
+                        ? { scale: [1, 1.4, 1] }
+                        : { scale: 1 }
+                    }
+                    transition={SPRING_SNAPPY}
+                    className="inline-flex"
+                  >
+                    <Heart
+                      className={`h-4 w-4 ${liked ? "fill-current" : ""}`}
+                    />
+                  </motion.span>
                   <span className="tabular-nums">{likeCount}</span>
                 </Button>
               </div>
             </article>
 
-            {/* Related Posts */}
+            {/* Related Posts — revealed as the reader reaches them */}
             {relatedPosts.length > 0 && (
-              <section className="mt-14">
-                <SectionHeading
-                  eyebrow="Keep reading"
-                  title="Related Articles"
-                  className="mb-6"
-                />
-                <div className="grid md:grid-cols-3 gap-6">
-                  {relatedPosts.map((relatedPost) => (
-                    <Link
-                      key={relatedPost.id}
-                      href={`/blog/${relatedPost.slug}`}
-                      className="group h-full"
-                    >
-                      <Card className="h-full gap-0 overflow-hidden py-0 transition-all duration-300 group-hover:ring-primary/40 group-hover:shadow-[0_16px_40px_-18px] group-hover:shadow-primary/35 motion-safe:group-hover:-translate-y-0.5">
-                        <div className="relative aspect-video overflow-hidden">
-                          <Image
-                            src={getSafeImageSrc(
-                              relatedPost.imageUrl,
-                              "/images/blog/placeholder.jpg"
-                            )}
-                            alt={relatedPost.title}
-                            fill
-                            sizes="(max-width: 768px) 100vw, 25vw"
-                            className="object-cover transition-transform duration-300 motion-safe:group-hover:scale-[1.03]"
-                          />
-                        </div>
-                        <CardContent className="flex flex-col gap-2 p-4">
-                          <h4 className="line-clamp-2 text-base font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
-                            {relatedPost.title}
-                          </h4>
-                          <p className="text-meta">
-                            {relatedPost.readTime || "5 min read"}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              </section>
+              <Reveal className="mt-14">
+                <section>
+                  <SectionHeading
+                    eyebrow="Keep reading"
+                    title="Related Articles"
+                    className="mb-6"
+                  />
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {relatedPosts.map((relatedPost) => (
+                      <Link
+                        key={relatedPost.id}
+                        href={`/blog/${relatedPost.slug}`}
+                        className="group h-full"
+                      >
+                        <Card className="h-full gap-0 overflow-hidden py-0 transition-all duration-300 group-hover:ring-primary/40 group-hover:shadow-[0_16px_40px_-18px] group-hover:shadow-primary/35 motion-safe:group-hover:-translate-y-0.5">
+                          <div className="relative aspect-video overflow-hidden">
+                            <Image
+                              src={getSafeImageSrc(
+                                relatedPost.imageUrl,
+                                "/images/blog/placeholder.jpg"
+                              )}
+                              alt={relatedPost.title}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 25vw"
+                              className="object-cover transition-transform duration-300 motion-safe:group-hover:scale-[1.03]"
+                            />
+                          </div>
+                          <CardContent className="flex flex-col gap-2 p-4">
+                            <h4 className="line-clamp-2 text-base font-semibold leading-snug transition-colors duration-200 group-hover:text-primary">
+                              {relatedPost.title}
+                            </h4>
+                            <p className="text-meta">
+                              {relatedPost.readTime || "5 min read"}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              </Reveal>
             )}
           </div>
 
