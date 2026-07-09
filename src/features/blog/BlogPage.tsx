@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useEffect, useRef } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
 import { BlogGrid, BlogGridSkeleton } from "./components/BlogGrid";
@@ -19,8 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { Loader2, Plus, Search, SearchX, X } from "lucide-react";
+import { getUniqueTags } from "@/lib/blogUtils";
 import { entrance } from "@/lib/motion";
 import { useBlogUrlParams } from "@/hooks";
 import type { BlogCategory, PaginatedBlogsResponse } from "@/types/blog";
@@ -33,7 +35,6 @@ export interface BlogPageProps {
 export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   // ─── Store ───
   const {
@@ -94,22 +95,48 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
     fetchFilteredBlogs();
   }, [activeCategory, activeTag, searchQuery, fetchFilteredBlogs]);
 
+  // Access-denied redirect notice — reads location.search in an effect so the
+  // page stays prerenderable (see useBlogUrlParams for the same constraint).
   useEffect(() => {
-    if (searchParams.get("accessDenied") !== "1") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("accessDenied") !== "1") {
       return;
     }
 
     toast.error("Access Denied");
 
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.delete("accessDenied");
-    const nextUrl = nextParams.size > 0 ? `${pathname}?${nextParams.toString()}` : pathname;
-    router.replace(nextUrl);
-  }, [pathname, router, searchParams]);
+    params.delete("accessDenied");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  }, [pathname, router]);
+
+  // ── First-paint data ──
+  // The store hydrates from the server payload in a post-mount effect; until
+  // then it is empty with blogsLoading=true. Render the server data directly
+  // during that window so the prerendered page and the initial visit/reload
+  // paint content instead of skeletons. URL-filtered visits briefly show the
+  // unfiltered set, then the matching fetch swaps in a skeleton.
+  const useServerData = blogsLoading && blogs.length === 0;
+
+  const displayBlogs = useServerData ? initialBlogs.blogs : blogs;
+  const displayTotalCount = useServerData ? initialBlogs.totalCount : totalCount;
+  const displayHasMore = useServerData ? initialBlogs.hasMore : hasMorePosts;
+  const displayCategories =
+    blogCategories.length > 0 ? blogCategories : initialCategories;
+  const displayTags = useMemo(
+    () => (allTags.length > 0 ? allTags : getUniqueTags(initialBlogs.blogs)),
+    [allTags, initialBlogs.blogs]
+  );
+
+  const isContentLoading =
+    (blogsLoading && !useServerData) ||
+    categoryLoading ||
+    tagLoading ||
+    searchLoading;
 
   // Sort posts client-side (derived state)
   const filteredPosts = useMemo(() => {
-    const posts = [...blogs];
+    const posts = [...displayBlogs];
 
     switch (sortBy) {
       case "oldest":
@@ -131,17 +158,14 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
     }
 
     return posts;
-  }, [blogs, sortBy]);
-
-  const isContentLoading =
-    blogsLoading || categoryLoading || tagLoading || searchLoading;
+  }, [displayBlogs, sortBy]);
 
   const hasActiveFilters =
     Boolean(searchQuery.trim()) || Boolean(activeTag) || activeCategory !== "all";
 
   const showingMeta =
     !isContentLoading && !error && filteredPosts.length > 0
-      ? `Showing ${filteredPosts.length} of ${totalCount} ${totalCount === 1 ? "post" : "posts"}`
+      ? `Showing ${filteredPosts.length} of ${displayTotalCount} ${displayTotalCount === 1 ? "post" : "posts"}`
       : undefined;
 
   return (
@@ -175,7 +199,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
           </div>
         )}
 
-        {categoriesLoading ? (
+        {categoriesLoading && displayCategories.length === 0 ? (
           <div className="lg:hidden glass py-4 border-y border-border/60">
             <div className="max-w-6xl mx-auto px-4">
               <div className="flex justify-center py-2 gap-2">
@@ -188,7 +212,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
         ) : (
           <div className="lg:hidden">
             <CategoryTabs
-              categories={blogCategories}
+              categories={displayCategories}
               activeCategory={activeCategory}
               onCategoryChange={onCategoryChange}
               isSearchActive={!!searchQuery.trim()}
@@ -263,39 +287,29 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
 
             {/* Blog Grid */}
             {error ? (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">&#x26A0;&#xFE0F;</div>
-                <h3 className="text-xl font-bold mb-2">{error}</h3>
-                <p className="text-muted-foreground">
-                  Please try a different category or clear your search.
-                </p>
-                <Button
-                  variant="link"
-                  className="mt-4 text-primary"
-                  onClick={onClearAllFilters}
-                >
-                  Clear and view all articles
-                </Button>
-              </div>
+              <EmptyState
+                icon={<span className="text-6xl">&#x26A0;&#xFE0F;</span>}
+                title={error}
+                description="Please try a different category or clear your search."
+                actionLabel="Clear and view all articles"
+                onAction={onClearAllFilters}
+              />
             ) : isContentLoading ? (
               <BlogGridSkeleton />
             ) : filteredPosts.length === 0 ? (
-              <div className="text-center py-12">
-                <SearchX className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
-                <h3 className="text-xl font-bold mb-2">No articles found</h3>
-                <p className="text-muted-foreground">
-                  Nothing matches the current filters.
-                </p>
-                {hasActiveFilters && (
-                  <Button
-                    variant="link"
-                    className="mt-4 text-primary"
-                    onClick={onClearAllFilters}
-                  >
-                    Clear and view all articles
-                  </Button>
-                )}
-              </div>
+              <EmptyState
+                icon={<SearchX className="h-10 w-10" />}
+                title="No articles found"
+                description={
+                  hasActiveFilters
+                    ? "Nothing matches the current filters."
+                    : "No articles have been published yet — check back soon."
+                }
+                actionLabel={
+                  hasActiveFilters ? "Clear and view all articles" : undefined
+                }
+                onAction={hasActiveFilters ? onClearAllFilters : undefined}
+              />
             ) : (
               <>
                 <BlogGrid
@@ -304,7 +318,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
                 />
 
                 {/* Load More Button */}
-                {hasMorePosts && (
+                {displayHasMore && (
                   <div className="my-12 text-center">
                     <Button
                       onClick={loadMorePosts}
@@ -333,12 +347,12 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
           <aside className="lg:w-1/4">
             <div className="lg:sticky lg:top-24">
               <BlogSidebar
-                categories={blogCategories}
+                categories={displayCategories}
                 activeCategory={activeCategory}
                 onCategoryChange={onCategoryChange}
                 isSearchActive={!!searchQuery.trim()}
                 hideCategoryNavUntilLg
-                tags={allTags}
+                tags={displayTags}
                 onTagClick={onTagChange}
                 activeTag={activeTag}
               />

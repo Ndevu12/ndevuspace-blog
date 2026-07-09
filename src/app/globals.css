@@ -237,6 +237,15 @@
   }
 
   /*
+   * Press feedback for tappable chips/buttons. Sets only the active scale —
+   * pair with a transition that covers transform (transition-all or
+   * transition-transform) on the consumer.
+   */
+  .pressable {
+    @apply motion-safe:active:scale-[0.97];
+  }
+
+  /*
    * Type roles (shared across public pages):
    * eyebrow — mono section label; meta — mono metadata line.
    */
