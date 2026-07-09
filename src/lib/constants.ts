@@ -18,6 +18,10 @@ export const SOCIAL_LINKS = {
   email: "hello@ndevuspace.com",
 } as const;
 
+// Blog post display fallbacks
+export const BLOG_PLACEHOLDER_IMAGE = "/images/blog/placeholder.jpg";
+export const DEFAULT_READ_TIME = "5 min read";
+
 // Default author info
 export const DEFAULT_AUTHOR = {
   name: "Jean Paul Elisa NIYOKWIZERWA",

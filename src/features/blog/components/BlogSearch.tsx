@@ -52,7 +52,7 @@ export function BlogSearch({
         type="submit"
         size="icon"
         aria-label="Search"
-        className="absolute right-1.5 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full transition-transform motion-safe:active:scale-90"
+        className="pressable absolute right-1.5 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full transition-transform"
       >
         <ArrowRight className="h-4 w-4" />
       </Button>
