@@ -1,11 +1,13 @@
 "use client";
 
-import type { BlogCategory, BlogPost } from "@/types/blog";
+import type { AdjacentBlogs, BlogCategory, BlogPost } from "@/types/blog";
 import Image from "next/image";
 import { useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { ArticleCodeBlocks } from "./components/ArticleCodeBlocks";
 import { BlogCard } from "./components/BlogCard";
 import { BlogSidebar } from "./components/BlogSidebar";
+import { PostNavigation } from "./components/PostNavigation";
 import { ShareArticle } from "./components/ShareArticle";
 import { TableOfContents } from "./components/TableOfContents";
 import { useBlogDetailStore } from "./detailStore";
@@ -38,9 +40,14 @@ import { toast } from "sonner";
 interface BlogDetailPageProps {
   post: BlogPost;
   categories: BlogCategory[];
+  adjacent?: AdjacentBlogs;
 }
 
-export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
+export function BlogDetailPage({
+  post,
+  categories,
+  adjacent,
+}: BlogDetailPageProps) {
   const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
 
@@ -54,6 +61,7 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
     initializePost,
     fetchSidebarData,
     toggleLike,
+    trackView,
     reset,
   } = useBlogDetailStore();
 
@@ -61,11 +69,12 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
   useEffect(() => {
     initializePost(post);
     fetchSidebarData(post);
+    trackView(post.id);
 
     return () => {
       reset();
     };
-  }, [post, initializePost, fetchSidebarData, reset]);
+  }, [post, initializePost, fetchSidebarData, trackView, reset]);
 
   const handleTagClick = (tag: string) => {
     router.push(`/blog?tag=${encodeURIComponent(tag)}`);
@@ -222,6 +231,7 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
                   <div className="space-y-6" />
                 )}
               </div>
+              <ArticleCodeBlocks contentKey={post.id} />
 
               {/* Tags */}
               <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6">
@@ -272,6 +282,11 @@ export function BlogDetailPage({ post, categories }: BlogDetailPageProps) {
                 </Button>
               </div>
             </article>
+
+            {/* Chronological navigation */}
+            {adjacent && (
+              <PostNavigation adjacent={adjacent} className="mt-10" />
+            )}
 
             {/* Related Posts — revealed as the reader reaches them */}
             {relatedPosts.length > 0 && (
