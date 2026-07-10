@@ -43,6 +43,12 @@ export function Footer() {
               >
                 Portfolio
               </a>
+              <a
+                href="/feed.xml"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                RSS Feed
+              </a>
             </nav>
           </div>
 
