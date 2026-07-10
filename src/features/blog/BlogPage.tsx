@@ -146,7 +146,12 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
         );
         break;
       case "popular":
-        posts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+        // Views measure popularity; likes break ties (and cover legacy rows).
+        posts.sort(
+          (a, b) =>
+            (b.viewsCount ?? 0) - (a.viewsCount ?? 0) ||
+            (b.likes || 0) - (a.likes || 0)
+        );
         break;
       case "newest":
       default:

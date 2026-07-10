@@ -2,9 +2,11 @@
 
 import { create } from "zustand";
 import type { BlogPost, BlogComment } from "@/types/blog";
+import { getUniqueTags } from "@/lib/blogUtils";
 import {
   getBlogsByCategory,
   getBlogsPaginated,
+  incrementBlogView,
   likeBlog,
 } from "./services/resolvedBlogService";
 
@@ -36,6 +38,9 @@ interface BlogDetailActions {
 
   // Like
   toggleLike: (postId: string) => Promise<void>;
+
+  // Views — best-effort, once per session per post
+  trackView: (postId: string) => Promise<void>;
 
   // Comments
   addComment: (comment: BlogComment) => void;
@@ -80,11 +85,7 @@ export const useBlogDetailStore = create<BlogDetailState & BlogDetailActions>(
 
       try {
         const allBlogsData = await getBlogsPaginated(1, 20);
-
-        const blogTags = allBlogsData.blogs?.flatMap((blog) => blog.tags || []) || [];
-        const uniqueTags = Array.from(
-          new Set(blogTags.filter((t): t is string => typeof t === "string"))
-        );
+        const uniqueTags = getUniqueTags(allBlogsData.blogs ?? []);
 
         let relatedPosts: BlogPost[] = [];
         if (post.category?.id) {
@@ -133,6 +134,20 @@ export const useBlogDetailStore = create<BlogDetailState & BlogDetailActions>(
         }
       } catch {
         throw new Error("Failed to like article");
+      }
+    },
+
+    trackView: async (postId) => {
+      if (typeof window === "undefined") return;
+
+      const key = `viewed:${postId}`;
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+
+      try {
+        await incrementBlogView(postId);
+      } catch {
+        // Best-effort — never surface view-tracking errors to the reader.
       }
     },
 

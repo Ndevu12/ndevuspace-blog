@@ -1,5 +1,10 @@
 import { createClient } from "@/lib/supabase/client";
-import type { BlogCategory, BlogPost, PaginatedBlogsResponse } from "@/types/blog";
+import type {
+  AdjacentBlogs,
+  BlogCategory,
+  BlogPost,
+  PaginatedBlogsResponse,
+} from "@/types/blog";
 
 type RpcObject = Record<string, unknown>;
 
@@ -166,6 +171,38 @@ export async function likeBlog(
   }
 
   return { likes: payload.likes_count };
+}
+
+export async function getAdjacentBlogs(slug: string): Promise<AdjacentBlogs> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("blog_public_get_adjacent", {
+    p_slug: slug,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Failed to fetch adjacent blogs.");
+  }
+
+  if (!data || typeof data !== "object") {
+    return { newer: null, older: null };
+  }
+
+  const payload = data as { newer?: BlogPost | null; older?: BlogPost | null };
+  return { newer: payload.newer ?? null, older: payload.older ?? null };
+}
+
+export async function incrementBlogView(blogId: string): Promise<number | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("blog_public_increment_view", {
+    p_blog_id: blogId,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Failed to record blog view.");
+  }
+
+  const payload = assertRpcObject(data, "Invalid view increment response.");
+  return typeof payload.views_count === "number" ? payload.views_count : null;
 }
 
 export async function getAllBlogCategories(): Promise<BlogCategory[]> {

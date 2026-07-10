@@ -1,7 +1,12 @@
 // Dummy blog service — mirrors blogService.ts interface using in-memory data
 // Used when NEXT_PUBLIC_USE_DUMMY_DATA=true, resolved at the consumer level
 
-import type { BlogCategory, BlogPost, PaginatedBlogsResponse } from "@/types/blog";
+import type {
+  AdjacentBlogs,
+  BlogCategory,
+  BlogPost,
+  PaginatedBlogsResponse,
+} from "@/types/blog";
 import { dummyBlogs, dummyCategories } from "@/data/dummyBlogs";
 
 function paginate(
@@ -86,6 +91,24 @@ export async function likeBlog(
 ): Promise<{ likes: number } | null> {
   const post = dummyBlogs.find((b) => b.id === blogId);
   return post ? { likes: (post.likes ?? 0) + 1 } : null;
+}
+
+export async function getAdjacentBlogs(slug: string): Promise<AdjacentBlogs> {
+  const ordered = sortByNewest(dummyBlogs);
+  const index = ordered.findIndex((b) => b.slug === slug);
+  if (index === -1) {
+    return { newer: null, older: null };
+  }
+
+  return {
+    newer: ordered[index - 1] ?? null,
+    older: ordered[index + 1] ?? null,
+  };
+}
+
+export async function incrementBlogView(blogId: string): Promise<number | null> {
+  const post = dummyBlogs.find((b) => b.id === blogId);
+  return post ? (post.viewsCount ?? 0) + 1 : null;
 }
 
 export async function getAllBlogCategories(): Promise<BlogCategory[]> {

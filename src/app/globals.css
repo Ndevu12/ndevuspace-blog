@@ -97,6 +97,14 @@
 
   --radius: 0.625rem;
 
+  /* Code tokens — light */
+  --code-keyword: #7c3aed;
+  --code-string: #047857;
+  --code-literal: #b45309;
+  --code-title: #1d4ed8;
+  --code-attr: #0e7490;
+  --code-comment: #64748b;
+
   /* Sidebar — light */
   --sidebar: #ffffff;
   --sidebar-foreground: #0f172a;
@@ -140,6 +148,14 @@
   --chart-3: #2563eb;
   --chart-4: #1d4ed8;
   --chart-5: #1e40af;
+
+  /* Code tokens — dark */
+  --code-keyword: #a78bfa;
+  --code-string: #34d399;
+  --code-literal: #fbbf24;
+  --code-title: #60a5fa;
+  --code-attr: #22d3ee;
+  --code-comment: #94a3b8;
 
   /* Sidebar — dark */
   --sidebar: #111118;
@@ -254,6 +270,75 @@
   }
   .text-meta {
     @apply font-mono text-xs tracking-wide text-muted-foreground;
+  }
+}
+
+/* ─── Code blocks (article content) ─── */
+@layer components {
+  /* Wrapper emitted by highlightCodeBlocks(); the chip reads data-language */
+  .code-block {
+    @apply relative my-6;
+  }
+  .code-block::before {
+    content: attr(data-language);
+    @apply absolute left-4 top-3 z-10 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground;
+  }
+  .code-block pre {
+    @apply my-0 rounded-lg border border-border bg-muted pt-9 text-sm;
+  }
+
+  /* Copy button injected by ArticleCodeBlocks */
+  .code-copy {
+    @apply absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card/80 text-muted-foreground backdrop-blur-sm transition-all duration-200 hover:border-primary hover:text-primary motion-safe:active:scale-[0.97];
+  }
+  .code-copy.copied {
+    @apply border-emerald-500/50 text-emerald-500;
+  }
+  .code-copy svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Token theme — colors defined per mode via --code-* variables */
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-meta {
+    color: var(--code-keyword);
+  }
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-addition {
+    color: var(--code-string);
+  }
+  .hljs-number,
+  .hljs-literal,
+  .hljs-deletion {
+    color: var(--code-literal);
+  }
+  .hljs-title,
+  .hljs-name,
+  .hljs-section,
+  .hljs-built_in {
+    color: var(--code-title);
+  }
+  .hljs-attr,
+  .hljs-attribute,
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-type,
+  .hljs-symbol {
+    color: var(--code-attr);
+  }
+  .hljs-comment,
+  .hljs-quote {
+    color: var(--code-comment);
+    font-style: italic;
+  }
+  .hljs-emphasis {
+    font-style: italic;
+  }
+  .hljs-strong {
+    font-weight: 600;
   }
 }
 
