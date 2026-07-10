@@ -74,6 +74,15 @@ export function getSafeImageSrc(
 }
 
 /**
+ * Category display name from a string or object shape.
+ */
+export function getCategoryName(category: BlogPost["category"]): string {
+  if (!category) return "Uncategorized";
+  if (typeof category === "string") return category;
+  return category.name || "Uncategorized";
+}
+
+/**
  * Cover image src for a post, falling back to the shared blog placeholder.
  */
 export function getPostImageSrc(post: Pick<BlogPost, "imageUrl">): string {
@@ -85,6 +94,20 @@ export function getPostImageSrc(post: Pick<BlogPost, "imageUrl">): string {
  */
 export function getReadTime(post: Pick<BlogPost, "readTime">): string {
   return post.readTime || DEFAULT_READ_TIME;
+}
+
+const WORDS_PER_MINUTE = 200;
+
+/**
+ * Estimate read time from article HTML (~200 wpm), e.g. "7 min read".
+ */
+export function estimateReadTime(html: string): string {
+  const text = html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z#0-9]+;/gi, " ");
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.round(words / WORDS_PER_MINUTE));
+  return `${minutes} min read`;
 }
 
 /**

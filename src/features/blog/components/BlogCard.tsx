@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   getAuthorName,
   getAuthorImage,
+  getCategoryName,
   getPostImageSrc,
   getReadTime,
   formatDate,
@@ -22,13 +23,6 @@ interface BlogCardProps {
    * "compact" — cover + title + read time, for dense grids (related posts).
    */
   variant?: BlogCardVariant;
-}
-
-// Helper: get category name from string or object
-function getCategoryName(category: BlogPost["category"]): string {
-  if (!category) return "Uncategorized";
-  if (typeof category === "string") return category;
-  return category.name || "Uncategorized";
 }
 
 /** Mono glass chip rendered over the cover image. */

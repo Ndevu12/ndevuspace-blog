@@ -6,7 +6,6 @@ export const blogFormSchema = z.object({
     content: z.string().min(20, "Content must be at least 20 characters"),
     categoryId: z.string().min(1, "Please select a category"),
     tags: z.array(z.string()).optional(),
-    readingTime: z.string().optional(),
     imageUrl: z.string().optional(),
     metaTitle: z.string().optional(),
     metaDescription: z.string().optional(),
