@@ -17,4 +17,4 @@ jobs:
           # Full history — evil-merge detection needs the complete commit graph.
           fetch-depth: 0
 
-      - uses: Ndevu12/strix@v1
+      - uses: Ndevu12/strix@v0.1.2
