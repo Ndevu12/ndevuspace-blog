@@ -14,7 +14,6 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { CommandPalette } from "@/components/shared/CommandPalette";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { PORTFOLIO_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -142,8 +141,6 @@ export function Header() {
   if (isDashboard) return null;
 
   return (
-    <>
-    <CommandPalette />
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
@@ -224,6 +221,5 @@ export function Header() {
         </div>
       </div>
     </header>
-    </>
   );
 }
