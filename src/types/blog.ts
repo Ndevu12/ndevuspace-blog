@@ -325,6 +325,12 @@ export interface BlogServerResponse {
   filters: BlogSearchFilters;
 }
 
+/** Adjacent published posts relative to one slug, in canonical order. */
+export interface AdjacentBlogs {
+  newer: BlogPost | null;
+  older: BlogPost | null;
+}
+
 /** Public list/search RPC jsonb: camelCase envelope keys (see `blogRowJson` wire note). */
 export interface PaginatedBlogsResponse {
   blogs: BlogPost[];

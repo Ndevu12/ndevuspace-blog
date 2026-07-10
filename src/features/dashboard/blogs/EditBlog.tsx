@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { estimateReadTime } from "@/lib/blogUtils";
 import {
   Select,
   SelectContent,
@@ -74,7 +75,6 @@ export function EditBlog({ blogId }: EditBlogProps) {
       content: "",
       categoryId: "",
       tags: [],
-      readingTime: "5",
       imageUrl: "",
       metaTitle: "",
       metaDescription: "",
@@ -131,7 +131,6 @@ export function EditBlog({ blogId }: EditBlogProps) {
           content: blog.content || "",
           categoryId,
           tags: formTags,
-          readingTime: blog.readTime?.replace(" min read", "") || "5",
           imageUrl: blog.imageUrl || "",
           metaTitle: blog.metaTitle || "",
           metaDescription: blog.metaDescription || "",
@@ -168,7 +167,7 @@ export function EditBlog({ blogId }: EditBlogProps) {
         formData.append("content", data.content);
         if (data.categoryId) formData.append("category", data.categoryId);
         formData.append("tags", JSON.stringify(data.tags ?? []));
-        if (data.readingTime) formData.append("readTime", `${data.readingTime} min read`);
+        formData.append("readTime", estimateReadTime(data.content));
         if (data.imageUrl) formData.append("imageUrl", data.imageUrl);
         if (data.metaTitle) formData.append("metaTitle", data.metaTitle);
         if (data.metaDescription) formData.append("metaDescription", data.metaDescription);
@@ -438,10 +437,6 @@ export function EditBlog({ blogId }: EditBlogProps) {
                         : "Upload an image or paste a URL above."}
                   </p>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="readingTime">Reading Time (min)</Label>
-                <Input id="readingTime" type="number" min="1" {...register("readingTime")} />
               </div>
               <Separator />
               <div className="space-y-2">

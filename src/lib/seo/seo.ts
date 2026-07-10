@@ -30,6 +30,11 @@ export const rootMetadata: Metadata = {
   description: siteConfig.description,
   keywords: [...siteConfig.keywords],
   authors: [{ name: siteConfig.author.name }],
+  alternates: {
+    types: {
+      "application/rss+xml": `${SITE_URL}/feed.xml`,
+    },
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -80,3 +85,43 @@ export const blogNotFoundMetadata: Metadata = {
   title: "Post Not Found",
   description: "The requested blog post could not be found.",
 };
+
+// ─── Structured data ───
+
+/**
+ * schema.org BlogPosting JSON-LD for an article page. Serialize with
+ * `serializeJsonLd` before embedding in a script tag.
+ */
+export function buildBlogPostJsonLd(post: BlogPost): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.metaDescription || post.description,
+    url: `${siteConfig.url}/blog/${post.slug}`,
+    datePublished: post.createdAt,
+    dateModified: post.updatedAt || post.createdAt,
+    image: post.imageUrl || undefined,
+    keywords: post.tags.join(", "),
+    author: {
+      "@type": "Person",
+      name: post.author
+        ? `${post.author.firstName} ${post.author.lastName}`
+        : siteConfig.author.name,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: siteConfig.name,
+      url: siteConfig.url,
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${siteConfig.url}/blog/${post.slug}`,
+    },
+  };
+}
+
+/** JSON-LD-safe serialization — escapes `<` so content can't close the script tag. */
+export function serializeJsonLd(data: Record<string, unknown>): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}
