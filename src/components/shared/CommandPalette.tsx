@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, LayoutGrid, Loader2, Newspaper, Tag } from "lucide-react";
+import {
+  FileText,
+  LayoutDashboard,
+  Loader2,
+  Newspaper,
+  Plus,
+  Tag,
+} from "lucide-react";
 import {
   Command,
   CommandDialog,
@@ -15,29 +22,35 @@ import {
 } from "@/components/ui/command";
 import { useDebouncedValue } from "@/hooks";
 import {
-  getAllBlogCategories,
   getBlogsPaginated,
   searchBlogsByTitle,
 } from "@/features/blog/services/resolvedBlogService";
-import type { BlogCategory, BlogPost } from "@/types/blog";
+import type { BlogPost } from "@/types/blog";
 
 const SEARCH_MIN_CHARS = 2;
 const RECENT_POSTS_LIMIT = 5;
 const SEARCH_RESULTS_LIMIT = 8;
 
-/** Dispatch on window to open the palette from anywhere (e.g. search-pill hint). */
+/** Dispatch on window to open the palette from anywhere (e.g. a header button). */
 export const OPEN_COMMAND_PALETTE_EVENT = "ndevuspace:open-command-palette";
 
+const DASHBOARD_NAV = [
+  { label: "Dashboard overview", href: "/dashboard", Icon: LayoutDashboard },
+  { label: "All blogs", href: "/dashboard/blogs", Icon: FileText },
+  { label: "New blog", href: "/dashboard/blogs/new", Icon: Plus },
+  { label: "Categories", href: "/dashboard/categories", Icon: Tag },
+] as const;
+
 /**
- * Global ⌘K palette: jump to posts and categories from anywhere.
- * Static data (categories, recent posts) loads once on first open; post
- * search is server-driven and debounced, so cmdk's own filtering is off.
+ * Dashboard ⌘K palette: jump to dashboard views, recent posts, or any
+ * published article via server-driven search. Post search is debounced and
+ * remote, so cmdk's own filtering is off; article selection opens the
+ * published page.
  */
 export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
   const [results, setResults] = useState<BlogPost[]>([]);
   // Query the current `results` belong to — searching/showing is derived.
@@ -68,19 +81,13 @@ export function CommandPalette() {
     };
   }, []);
 
-  // Load categories + recent posts once, on first open
+  // Load recent posts once, on first open
   useEffect(() => {
     if (!open || staticLoadedRef.current) return;
     staticLoadedRef.current = true;
 
-    Promise.all([
-      getAllBlogCategories(),
-      getBlogsPaginated(1, RECENT_POSTS_LIMIT),
-    ])
-      .then(([cats, recent]) => {
-        setCategories(cats);
-        setRecentPosts(recent.blogs);
-      })
+    getBlogsPaginated(1, RECENT_POSTS_LIMIT)
+      .then((recent) => setRecentPosts(recent.blogs))
       .catch(() => {
         // Palette stays usable with navigation items only.
       });
@@ -117,22 +124,22 @@ export function CommandPalette() {
     [router]
   );
 
-  const matchingCategories = isSearchActive
-    ? categories.filter((c) =>
-        c.name.toLowerCase().includes(debouncedQuery.toLowerCase())
+  const matchingNav = isSearchActive
+    ? DASHBOARD_NAV.filter((item) =>
+        item.label.toLowerCase().includes(debouncedQuery.toLowerCase())
       )
-    : categories;
+    : DASHBOARD_NAV;
 
   return (
     <CommandDialog
       open={open}
       onOpenChange={setOpen}
       title="Search"
-      description="Search articles and categories"
+      description="Search articles and dashboard views"
     >
       <Command shouldFilter={false}>
       <CommandInput
-        placeholder="Search articles, categories…"
+        placeholder="Search articles, dashboard views…"
         value={query}
         onValueChange={setQuery}
       />
@@ -178,36 +185,20 @@ export function CommandPalette() {
           </CommandGroup>
         )}
 
-        {matchingCategories.length > 0 && (
+        {matchingNav.length > 0 && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Categories">
-              {matchingCategories.map((category) => (
+            <CommandGroup heading="Dashboard">
+              {matchingNav.map(({ label, href, Icon }) => (
                 <CommandItem
-                  key={category.id}
-                  value={`category-${category.id}`}
-                  onSelect={() =>
-                    navigate(
-                      `/blog?category=${encodeURIComponent(category.name)}`
-                    )
-                  }
+                  key={href}
+                  value={`nav-${href}`}
+                  onSelect={() => navigate(href)}
                 >
-                  <Tag aria-hidden />
-                  {category.name}
+                  <Icon aria-hidden />
+                  {label}
                 </CommandItem>
               ))}
-            </CommandGroup>
-          </>
-        )}
-
-        {!isSearchActive && (
-          <>
-            <CommandSeparator />
-            <CommandGroup heading="Navigation">
-              <CommandItem value="nav-blog" onSelect={() => navigate("/blog")}>
-                <LayoutGrid aria-hidden />
-                All articles
-              </CommandItem>
             </CommandGroup>
           </>
         )}

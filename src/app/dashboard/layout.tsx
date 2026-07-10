@@ -4,6 +4,11 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { AuthGuard } from "@/features/auth/AuthGuard";
 import { Separator } from "@/components/ui/separator";
+import {
+  CommandPalette,
+  OPEN_COMMAND_PALETTE_EVENT,
+} from "@/components/shared/CommandPalette";
+import { Search } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -13,6 +18,7 @@ export default function DashboardLayout({
   return (
     <AuthGuard requiredRole="admin">
       <SidebarProvider>
+        <CommandPalette />
         <DashboardSidebar />
         <SidebarInset>
           <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
@@ -21,6 +27,19 @@ export default function DashboardLayout({
             <span className="text-sm font-medium text-muted-foreground">
               Dashboard
             </span>
+            <button
+              type="button"
+              onClick={() =>
+                window.dispatchEvent(new Event(OPEN_COMMAND_PALETTE_EVENT))
+              }
+              className="pressable ml-auto flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground transition-all duration-200 hover:border-primary/50 hover:text-primary"
+            >
+              <Search className="h-3.5 w-3.5" aria-hidden />
+              Search
+              <kbd className="rounded border border-border px-1 font-mono text-[10px]">
+                ⌘K
+              </kbd>
+            </button>
           </header>
           <main className="flex-1 overflow-y-auto p-6">
             {children}
