@@ -174,11 +174,11 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
       : undefined;
 
   return (
-    <main className="bg-background pt-28 md:pt-32">
-      {/* Search — above filters & listing; wired via useBlogUrlParams + store */}
+    <main className="bg-background pt-24 lg:pt-32">
+      {/* Hero search — desktop only; mobile uses the bottom bar's Search button */}
       <motion.div
         {...entrance(prefersReducedMotion)}
-        className="max-w-6xl mx-auto px-4 pb-8 md:pb-10"
+        className="hidden lg:block max-w-6xl mx-auto px-4 pb-8 md:pb-10"
       >
         <BlogSearch onSearch={onSearch} searchQuery={searchQuery} />
       </motion.div>
