@@ -22,8 +22,8 @@ export interface MobileNavItem {
    * category tap, a tag) can dismiss the sheet after acting.
    */
   content: React.ReactNode | ((close: () => void) => React.ReactNode);
-  /** Optional count/dot shown on the trigger. */
-  badge?: React.ReactNode;
+  /** Show an accent dot on the trigger when a related filter is active. */
+  active?: boolean;
 }
 
 interface MobileNavProps {
@@ -55,15 +55,21 @@ export function MobileNav({ items, className }: MobileNavProps) {
             key={item.key}
             type="button"
             onClick={() => setOpenKey(item.key)}
-            className="pressable relative flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-muted-foreground transition-colors duration-200 hover:text-primary"
-          >
-            <span className="[&_svg]:h-5 [&_svg]:w-5">{item.icon}</span>
-            <span className="text-[11px] font-medium">{item.label}</span>
-            {item.badge != null && (
-              <span className="absolute right-[22%] top-1.5 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold leading-4 text-primary-foreground">
-                {item.badge}
-              </span>
+            className={cn(
+              "pressable relative flex flex-1 flex-col items-center justify-center gap-1 py-2.5 transition-colors duration-200 hover:text-primary",
+              item.active ? "text-primary" : "text-muted-foreground"
             )}
+          >
+            <span className="relative [&_svg]:h-5 [&_svg]:w-5">
+              {item.icon}
+              {item.active && (
+                <span
+                  aria-hidden
+                  className="absolute -right-1.5 -top-1 h-2 w-2 rounded-full bg-primary ring-2 ring-background"
+                />
+              )}
+            </span>
+            <span className="text-[11px] font-medium">{item.label}</span>
           </button>
         ))}
       </nav>
