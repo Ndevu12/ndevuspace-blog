@@ -174,7 +174,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
       : undefined;
 
   return (
-    <main className="bg-background pt-24 lg:pt-32">
+    <main className="bg-background lg:pt-10">
       {/* Hero search — desktop only; mobile uses the bottom bar's Search button */}
       <motion.div
         {...entrance(prefersReducedMotion)}
@@ -224,7 +224,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
         )}
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-12 pb-28 lg:pb-12">
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-28 lg:pt-8 lg:pb-12">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Content */}
           <div className="lg:w-3/4">
