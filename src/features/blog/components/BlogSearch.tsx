@@ -9,12 +9,14 @@ interface BlogSearchProps {
   onSearch: (query: string) => void;
   searchQuery?: string;
   placeholder?: string;
+  autoFocus?: boolean;
 }
 
 export function BlogSearch({
   onSearch,
   searchQuery: externalSearchQuery = "",
   placeholder = "Search articles by keyword or topic…",
+  autoFocus = false,
 }: BlogSearchProps) {
   const [query, setQuery] = useState(externalSearchQuery);
 
@@ -43,6 +45,7 @@ export function BlogSearch({
       />
       <Input
         type="search"
+        autoFocus={autoFocus}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}

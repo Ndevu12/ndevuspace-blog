@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArticleCodeBlocks } from "./components/ArticleCodeBlocks";
 import { BlogCard } from "./components/BlogCard";
+import { BlogSearch } from "./components/BlogSearch";
 import { BlogSidebar } from "./components/BlogSidebar";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { MobileTocButton } from "./components/MobileTocButton";
@@ -38,7 +39,7 @@ import { Reveal } from "@/components/shared/Reveal";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { fadeRise, fadeScale, staggerContainer, SPRING_SNAPPY } from "@/lib/motion";
 import { MobileNav } from "@/components/shared/MobileNav";
-import { Calendar, Clock, Heart, LayoutGrid, Tag } from "lucide-react";
+import { Calendar, Clock, Heart, LayoutGrid, Search, Tag } from "lucide-react";
 import { toast } from "sonner";
 
 interface BlogDetailPageProps {
@@ -82,6 +83,11 @@ export function BlogDetailPage({
 
   const handleTagClick = (tag: string) => {
     router.push(`/blog?tag=${encodeURIComponent(tag)}`);
+  };
+
+  const handleSearch = (query: string) => {
+    const q = query.trim();
+    router.push(q ? `/blog?search=${encodeURIComponent(q)}` : "/blog");
   };
 
   const handleCategoryChange = (categoryId: string) => {
@@ -345,6 +351,21 @@ export function BlogDetailPage({
                 activeCategory={post.category?.id ?? "all"}
                 onCategoryChange={(id) => {
                   handleCategoryChange(id);
+                  close();
+                }}
+              />
+            ),
+          },
+          {
+            key: "search",
+            label: "Search",
+            icon: <Search />,
+            title: "Search articles",
+            content: (close) => (
+              <BlogSearch
+                autoFocus
+                onSearch={(query) => {
+                  handleSearch(query);
                   close();
                 }}
               />

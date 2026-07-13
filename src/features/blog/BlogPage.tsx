@@ -345,7 +345,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
         </div>
       </div>
 
-      {/* Mobile bottom bar — houses category & topic browsing in sheets */}
+      {/* Mobile bottom bar — category browsing, search, and topics in sheets */}
       <MobileNav
         items={[
           {
@@ -353,6 +353,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
             label: "Categories",
             icon: <LayoutGrid />,
             title: "Categories",
+            active: activeCategory !== "all" && !searchQuery.trim(),
             content: (close) => (
               <CategoryTabs
                 variant="sidebar"
@@ -367,10 +368,28 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
             ),
           },
           {
+            key: "search",
+            label: "Search",
+            icon: <Search />,
+            title: "Search articles",
+            active: Boolean(searchQuery.trim()),
+            content: (close) => (
+              <BlogSearch
+                autoFocus
+                searchQuery={searchQuery}
+                onSearch={(query) => {
+                  onSearch(query);
+                  close();
+                }}
+              />
+            ),
+          },
+          {
             key: "topics",
             label: "Topics",
             icon: <Tag />,
             title: "Topic Cloud",
+            active: Boolean(activeTag),
             content: (close) => (
               <TopicCloud
                 tags={displayTags}
