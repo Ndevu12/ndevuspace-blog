@@ -133,7 +133,7 @@ export function BlogDetailPage({
       <ReadingProgress />
 
       {/* Article Header — staged reveal: breadcrumb → title block → meta → image → lede */}
-      <section className="relative bg-card pt-24 pb-16">
+      <section className="relative bg-card pt-16 pb-16 lg:pt-12">
         <motion.div
           className="max-w-4xl mx-auto px-4"
           variants={staggerContainer(0.09)}
