@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { useScrollDirection } from "@/hooks";
 import { PORTFOLIO_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -134,14 +135,24 @@ function MobileBlogNavLinksFallback({ onNavigate }: { onNavigate: () => void }) 
 export function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const scrollDirection = useScrollDirection();
 
   const isDashboard = pathname.startsWith("/dashboard");
 
   // Don't render on dashboard pages — they have their own sidebar
   if (isDashboard) return null;
 
+  // Hide on scroll-down to give reading room; reveal on scroll-up. Keep it
+  // shown while any mobile sheet is open so its trigger stays reachable.
+  const hidden = scrollDirection === "down" && !mobileOpen;
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-transform duration-300",
+        hidden && "-translate-y-full"
+      )}
+    >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/blog" className="flex items-center gap-2 font-bold text-lg">
