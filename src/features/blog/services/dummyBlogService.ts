@@ -5,9 +5,48 @@ import type {
   AdjacentBlogs,
   BlogCategory,
   BlogPost,
+  BlogTag,
   PaginatedBlogsResponse,
+  PaginatedTagsResponse,
 } from "@/types/blog";
 import { dummyBlogs, dummyCategories } from "@/data/dummyBlogs";
+
+const TAG_CLOUD_CAP = 30;
+
+function slugifyTag(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Mirror of blog_public_tags_list against the in-memory posts: count
+ * published posts per tag, keep the top {@link TAG_CLOUD_CAP} by popularity,
+ * then serve that capped set in alphabetical pages.
+ */
+function rankPublishedTags(): BlogTag[] {
+  const counts = new Map<string, number>();
+  for (const blog of dummyBlogs) {
+    for (const tag of blog.tags || []) {
+      if (tag) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(counts.entries())
+    .map(([name, postCount]) => ({ name, postCount }))
+    // Popularity first, then name — to select the capped set.
+    .sort((a, b) => b.postCount - a.postCount || a.name.localeCompare(b.name))
+    .slice(0, TAG_CLOUD_CAP)
+    // Display alphabetically so paginated batches stay A–Z.
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(({ name, postCount }) => ({
+      id: slugifyTag(name),
+      name,
+      slug: slugifyTag(name),
+      postCount,
+    }));
+}
 
 function paginate(
   posts: BlogPost[],
@@ -109,6 +148,22 @@ export async function getAdjacentBlogs(slug: string): Promise<AdjacentBlogs> {
 export async function incrementBlogView(blogId: string): Promise<number | null> {
   const post = dummyBlogs.find((b) => b.id === blogId);
   return post ? (post.viewsCount ?? 0) + 1 : null;
+}
+
+export async function getPublicTags(
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedTagsResponse> {
+  const all = rankPublishedTags();
+  const start = (page - 1) * limit;
+  const tags = all.slice(start, start + limit);
+  return {
+    tags,
+    totalCount: all.length,
+    maxPostCount: all.reduce((max, tag) => Math.max(max, tag.postCount), 0),
+    hasMore: start + limit < all.length,
+    currentPage: page,
+  };
 }
 
 export async function getAllBlogCategories(): Promise<BlogCategory[]> {

@@ -1,6 +1,11 @@
 "use client";
 
-import type { AdjacentBlogs, BlogCategory, BlogPost } from "@/types/blog";
+import type {
+  AdjacentBlogs,
+  BlogCategory,
+  BlogPost,
+  PaginatedTagsResponse,
+} from "@/types/blog";
 import Image from "next/image";
 import { useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -15,6 +20,7 @@ import { ShareArticle } from "./components/ShareArticle";
 import { TableOfContents } from "./components/TableOfContents";
 import { TopicCloud } from "./components/TopicCloud";
 import { useBlogDetailStore } from "./detailStore";
+import { useHydrateTopicCloud } from "./topicCloudStore";
 import {
   getAuthorName,
   getAuthorImage,
@@ -46,25 +52,29 @@ interface BlogDetailPageProps {
   post: BlogPost;
   categories: BlogCategory[];
   adjacent?: AdjacentBlogs;
+  /** Omitted when the server tag fetch fails; the client store then loads it. */
+  initialTags?: PaginatedTagsResponse;
 }
 
 export function BlogDetailPage({
   post,
   categories,
   adjacent,
+  initialTags,
 }: BlogDetailPageProps) {
   const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
 
+  useHydrateTopicCloud(initialTags);
+
   // ─── Store ───
   const {
-    allTags,
     relatedPosts,
     liked,
     likeCount,
     currentUrl,
     initializePost,
-    fetchSidebarData,
+    fetchRelatedPosts,
     toggleLike,
     trackView,
     reset,
@@ -73,13 +83,13 @@ export function BlogDetailPage({
   // Initialize on mount / post change
   useEffect(() => {
     initializePost(post);
-    fetchSidebarData(post);
+    fetchRelatedPosts(post);
     trackView(post.id);
 
     return () => {
       reset();
     };
-  }, [post, initializePost, fetchSidebarData, trackView, reset]);
+  }, [post, initializePost, fetchRelatedPosts, trackView, reset]);
 
   const handleTagClick = (tag: string) => {
     router.push(`/blog?tag=${encodeURIComponent(tag)}`);
@@ -327,7 +337,6 @@ export function BlogDetailPage({
                 activeCategory={post.category?.id ?? "all"}
                 onCategoryChange={handleCategoryChange}
                 isSearchActive={false}
-                tags={allTags}
                 onTagClick={handleTagClick}
                 activeTag={null}
               />
@@ -378,7 +387,6 @@ export function BlogDetailPage({
             title: "Topic Cloud",
             content: (close) => (
               <TopicCloud
-                tags={allTags}
                 onTagClick={(tag) => {
                   handleTagClick(tag);
                   close();
