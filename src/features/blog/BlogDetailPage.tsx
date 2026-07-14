@@ -6,10 +6,14 @@ import { useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArticleCodeBlocks } from "./components/ArticleCodeBlocks";
 import { BlogCard } from "./components/BlogCard";
+import { BlogSearch } from "./components/BlogSearch";
 import { BlogSidebar } from "./components/BlogSidebar";
+import { CategoryTabs } from "./components/CategoryTabs";
+import { MobileTocButton } from "./components/MobileTocButton";
 import { PostNavigation } from "./components/PostNavigation";
 import { ShareArticle } from "./components/ShareArticle";
 import { TableOfContents } from "./components/TableOfContents";
+import { TopicCloud } from "./components/TopicCloud";
 import { useBlogDetailStore } from "./detailStore";
 import {
   getAuthorName,
@@ -34,7 +38,8 @@ import { ReadingProgress } from "@/components/shared/ReadingProgress";
 import { Reveal } from "@/components/shared/Reveal";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { fadeRise, fadeScale, staggerContainer, SPRING_SNAPPY } from "@/lib/motion";
-import { Calendar, Clock, Heart } from "lucide-react";
+import { MobileNav } from "@/components/shared/MobileNav";
+import { Calendar, Clock, Heart, LayoutGrid, Search, Tag } from "lucide-react";
 import { toast } from "sonner";
 
 interface BlogDetailPageProps {
@@ -80,6 +85,11 @@ export function BlogDetailPage({
     router.push(`/blog?tag=${encodeURIComponent(tag)}`);
   };
 
+  const handleSearch = (query: string) => {
+    const q = query.trim();
+    router.push(q ? `/blog?search=${encodeURIComponent(q)}` : "/blog");
+  };
+
   const handleCategoryChange = (categoryId: string) => {
     if (categoryId === "all") {
       router.push("/blog");
@@ -123,7 +133,7 @@ export function BlogDetailPage({
       <ReadingProgress />
 
       {/* Article Header — staged reveal: breadcrumb → title block → meta → image → lede */}
-      <section className="relative bg-card pt-24 pb-16">
+      <section className="relative bg-card pt-16 pb-16 lg:pt-12">
         <motion.div
           className="max-w-4xl mx-auto px-4"
           variants={staggerContainer(0.09)}
@@ -205,18 +215,16 @@ export function BlogDetailPage({
         </motion.div>
       </section>
 
+      {/* Floating TOC trigger — mobile only; desktop uses the sidebar TOC */}
+      <MobileTocButton />
+
       {/* Article Content */}
-      <main className="max-w-7xl mx-auto px-4 py-12">
+      <main className="max-w-7xl mx-auto px-4 py-12 pb-28 lg:pb-12">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left Sidebar — Table of Contents */}
+          {/* Left Sidebar — Table of Contents (desktop) */}
           <aside className="hidden lg:block lg:w-1/5">
             <TableOfContents />
           </aside>
-
-          {/* Mobile TOC — shown above content on small screens */}
-          <div className="lg:hidden">
-            <TableOfContents />
-          </div>
 
           {/* Article Content — long-form reads on the open page, no card chrome */}
           <div className="lg:w-3/5">
@@ -311,8 +319,8 @@ export function BlogDetailPage({
             )}
           </div>
 
-          {/* Right Sidebar */}
-          <aside className="lg:w-1/5">
+          {/* Right Sidebar — desktop only; mobile uses the bottom bar below */}
+          <aside className="hidden lg:block lg:w-1/5">
             <div className="lg:sticky lg:top-24">
               <BlogSidebar
                 categories={categories}
@@ -327,6 +335,59 @@ export function BlogDetailPage({
           </aside>
         </div>
       </main>
+
+      {/* Mobile bottom bar — category & topic browsing in sheets */}
+      <MobileNav
+        items={[
+          {
+            key: "categories",
+            label: "Categories",
+            icon: <LayoutGrid />,
+            title: "Categories",
+            content: (close) => (
+              <CategoryTabs
+                variant="sidebar"
+                categories={categories}
+                activeCategory={post.category?.id ?? "all"}
+                onCategoryChange={(id) => {
+                  handleCategoryChange(id);
+                  close();
+                }}
+              />
+            ),
+          },
+          {
+            key: "search",
+            label: "Search",
+            icon: <Search />,
+            title: "Search articles",
+            content: (close) => (
+              <BlogSearch
+                autoFocus
+                onSearch={(query) => {
+                  handleSearch(query);
+                  close();
+                }}
+              />
+            ),
+          },
+          {
+            key: "topics",
+            label: "Topics",
+            icon: <Tag />,
+            title: "Topic Cloud",
+            content: (close) => (
+              <TopicCloud
+                tags={allTags}
+                onTagClick={(tag) => {
+                  handleTagClick(tag);
+                  close();
+                }}
+              />
+            ),
+          },
+        ]}
+      />
     </>
   );
 }

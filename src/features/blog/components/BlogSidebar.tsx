@@ -1,9 +1,9 @@
 "use client";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import type { BlogCategory } from "@/types/blog";
 import { CategoryTabs } from "./CategoryTabs";
+import { TopicCloud } from "./TopicCloud";
 
 export interface BlogSidebarProps {
   tags: string[];
@@ -61,28 +61,11 @@ export function BlogSidebar({
           <h3 className="text-eyebrow">Topic Cloud</h3>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag, idx) => {
-              const isActive = activeTag === tag;
-              return (
-                <button
-                  key={`${tag}-${idx}`}
-                  onClick={() => onTagClick?.(tag)}
-                  className="pressable transition-transform duration-150"
-                >
-                  <Badge
-                    variant={isActive ? "default" : "secondary"}
-                    className={`cursor-pointer transition-colors ${
-                      !isActive &&
-                      "hover:bg-primary/10 hover:text-primary"
-                    }`}
-                  >
-                    {tag}
-                  </Badge>
-                </button>
-              );
-            })}
-          </div>
+          <TopicCloud
+            tags={tags}
+            activeTag={activeTag}
+            onTagClick={onTagClick}
+          />
         </CardContent>
       </Card>
     </div>

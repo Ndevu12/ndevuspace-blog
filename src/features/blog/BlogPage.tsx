@@ -7,9 +7,9 @@ import { toast } from "sonner";
 import { BlogGrid, BlogGridSkeleton } from "./components/BlogGrid";
 import { BlogSidebar } from "./components/BlogSidebar";
 import { CategoryTabs } from "./components/CategoryTabs";
+import { TopicCloud } from "./components/TopicCloud";
 import { BlogSearch } from "./components/BlogSearch";
 import { useBlogListingStore } from "./store";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -21,7 +21,8 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { InfiniteScrollSentinel } from "@/components/shared/InfiniteScrollSentinel";
 import { SectionHeading } from "@/components/shared/SectionHeading";
-import { Search, SearchX, X } from "lucide-react";
+import { MobileNav } from "@/components/shared/MobileNav";
+import { LayoutGrid, Search, SearchX, Tag, X } from "lucide-react";
 import { getUniqueTags } from "@/lib/blogUtils";
 import { entrance } from "@/lib/motion";
 import { useBlogUrlParams } from "@/hooks";
@@ -48,7 +49,6 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
     hasMorePosts,
     totalCount,
     blogsLoading,
-    categoriesLoading,
     categoryLoading,
     tagLoading,
     searchLoading,
@@ -174,16 +174,17 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
       : undefined;
 
   return (
-    <main className="bg-background pt-28 md:pt-32">
-      {/* Search — above filters & listing; wired via useBlogUrlParams + store */}
+    <main className="bg-background lg:pt-10">
+      {/* Hero search — desktop only; mobile uses the bottom bar's Search button */}
       <motion.div
         {...entrance(prefersReducedMotion)}
-        className="max-w-6xl mx-auto px-4 pb-8 md:pb-10"
+        className="hidden lg:block max-w-6xl mx-auto px-4 pb-8 md:pb-10"
       >
         <BlogSearch onSearch={onSearch} searchQuery={searchQuery} />
       </motion.div>
 
-      {/* Sticky filters: category tabs only below lg (desktop uses sidebar categories) */}
+      {/* Sticky status: search + active tag. Category browsing lives in the
+          desktop sidebar and the mobile bottom bar. */}
       <div className="sticky top-16 z-10">
         {searchQuery.trim() && (
           <div className="glass bg-primary/5 border-b border-primary/20 py-3">
@@ -201,27 +202,6 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
                 </button>
               </div>
             </div>
-          </div>
-        )}
-
-        {categoriesLoading && displayCategories.length === 0 ? (
-          <div className="lg:hidden glass py-4 border-y border-border/60">
-            <div className="max-w-6xl mx-auto px-4">
-              <div className="flex justify-center py-2 gap-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-9 w-24 rounded-full" />
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="lg:hidden">
-            <CategoryTabs
-              categories={displayCategories}
-              activeCategory={activeCategory}
-              onCategoryChange={onCategoryChange}
-              isSearchActive={!!searchQuery.trim()}
-            />
           </div>
         )}
 
@@ -244,7 +224,7 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
         )}
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-28 lg:pt-8 lg:pb-12">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Content */}
           <div className="lg:w-3/4">
@@ -333,15 +313,14 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
             )}
           </div>
 
-          {/* Sidebar — sticky on desktop so it tracks the scroll */}
-          <aside className="lg:w-1/4">
+          {/* Sidebar — desktop only; mobile uses the bottom bar below */}
+          <aside className="hidden lg:block lg:w-1/4">
             <div className="lg:sticky lg:top-24">
               <BlogSidebar
                 categories={displayCategories}
                 activeCategory={activeCategory}
                 onCategoryChange={onCategoryChange}
                 isSearchActive={!!searchQuery.trim()}
-                hideCategoryNavUntilLg
                 tags={displayTags}
                 onTagClick={onTagChange}
                 activeTag={activeTag}
@@ -350,6 +329,65 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
           </aside>
         </div>
       </div>
+
+      {/* Mobile bottom bar — category browsing, search, and topics in sheets */}
+      <MobileNav
+        items={[
+          {
+            key: "categories",
+            label: "Categories",
+            icon: <LayoutGrid />,
+            title: "Categories",
+            active: activeCategory !== "all" && !searchQuery.trim(),
+            content: (close) => (
+              <CategoryTabs
+                variant="sidebar"
+                categories={displayCategories}
+                activeCategory={activeCategory}
+                isSearchActive={!!searchQuery.trim()}
+                onCategoryChange={(id) => {
+                  onCategoryChange(id);
+                  close();
+                }}
+              />
+            ),
+          },
+          {
+            key: "search",
+            label: "Search",
+            icon: <Search />,
+            title: "Search articles",
+            active: Boolean(searchQuery.trim()),
+            content: (close) => (
+              <BlogSearch
+                autoFocus
+                searchQuery={searchQuery}
+                onSearch={(query) => {
+                  onSearch(query);
+                  close();
+                }}
+              />
+            ),
+          },
+          {
+            key: "topics",
+            label: "Topics",
+            icon: <Tag />,
+            title: "Topic Cloud",
+            active: Boolean(activeTag),
+            content: (close) => (
+              <TopicCloud
+                tags={displayTags}
+                activeTag={activeTag}
+                onTagClick={(tag) => {
+                  onTagChange(tag);
+                  close();
+                }}
+              />
+            ),
+          },
+        ]}
+      />
     </main>
   );
 }
