@@ -10,7 +10,6 @@ import { CategoryTabs } from "./components/CategoryTabs";
 import { TopicCloud } from "./components/TopicCloud";
 import { BlogSearch } from "./components/BlogSearch";
 import { useBlogListingStore } from "./store";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -20,9 +19,10 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { InfiniteScrollSentinel } from "@/components/shared/InfiniteScrollSentinel";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { MobileNav } from "@/components/shared/MobileNav";
-import { LayoutGrid, Loader2, Plus, Search, SearchX, Tag, X } from "lucide-react";
+import { LayoutGrid, Search, SearchX, Tag, X } from "lucide-react";
 import { getUniqueTags } from "@/lib/blogUtils";
 import { entrance } from "@/lib/motion";
 import { useBlogUrlParams } from "@/hooks";
@@ -302,28 +302,13 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
                   featureFirst={!hasActiveFilters}
                 />
 
-                {/* Load More Button */}
-                {displayHasMore && (
-                  <div className="my-12 text-center">
-                    <Button
-                      onClick={loadMorePosts}
-                      disabled={loadingMore}
-                      size="lg"
-                    >
-                      {loadingMore ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Load More
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
+                {/* Infinite scroll — auto-loads on scroll, with an accessible
+                    "Load more" fallback for keyboard / assistive tech. */}
+                <InfiniteScrollSentinel
+                  onLoadMore={loadMorePosts}
+                  hasMore={displayHasMore}
+                  loading={loadingMore}
+                />
               </>
             )}
           </div>
