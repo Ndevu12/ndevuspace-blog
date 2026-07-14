@@ -4,8 +4,10 @@ import {
   getAdjacentBlogs,
   getAllBlogCategories,
   getBlogBySlug,
+  getPublicTags,
 } from "@/features/blog/services/resolvedBlogService";
 import { BlogDetailPage } from "@/features/blog";
+import { TOPIC_PAGE_SIZE } from "@/features/blog/topicCloudStore";
 import { highlightCodeBlocks } from "@/lib/highlightCode";
 import {
   buildBlogPostJsonLd,
@@ -33,10 +35,13 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const [post, categories, adjacent] = await Promise.all([
+  const [post, categories, adjacent, initialTags] = await Promise.all([
     getBlogBySlug(slug),
     getAllBlogCategories(),
     getAdjacentBlogs(slug).catch(() => ({ newer: null, older: null })),
+    // Topics are secondary — never let a tag-fetch failure (e.g. the RPC not
+    // yet applied) break the page. The client store loads them on mount.
+    getPublicTags(1, TOPIC_PAGE_SIZE).catch(() => undefined),
   ]);
 
   if (!post) {
@@ -60,6 +65,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         post={highlightedPost}
         categories={categories}
         adjacent={adjacent}
+        initialTags={initialTags}
       />
     </>
   );
