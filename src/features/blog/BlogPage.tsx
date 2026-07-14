@@ -35,7 +35,8 @@ import type {
 export interface BlogPageProps {
   initialBlogs: PaginatedBlogsResponse;
   initialCategories: BlogCategory[];
-  initialTags: PaginatedTagsResponse;
+  /** Omitted when the server tag fetch fails; the client store then loads it. */
+  initialTags?: PaginatedTagsResponse;
 }
 
 export function BlogPage({
