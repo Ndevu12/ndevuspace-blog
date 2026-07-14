@@ -2,10 +2,8 @@
 
 import { create } from "zustand";
 import type { BlogPost, BlogComment } from "@/types/blog";
-import { getUniqueTags } from "@/lib/blogUtils";
 import {
   getBlogsByCategory,
-  getBlogsPaginated,
   incrementBlogView,
   likeBlog,
 } from "./services/resolvedBlogService";
@@ -14,7 +12,6 @@ import {
 
 interface BlogDetailState {
   // Sidebar data
-  allTags: string[];
   relatedPosts: BlogPost[];
 
   // Comments
@@ -34,7 +31,7 @@ interface BlogDetailState {
 interface BlogDetailActions {
   // Initialization
   initializePost: (post: BlogPost) => void;
-  fetchSidebarData: (post: BlogPost) => Promise<void>;
+  fetchRelatedPosts: (post: BlogPost) => Promise<void>;
 
   // Like
   toggleLike: (postId: string) => Promise<void>;
@@ -50,7 +47,6 @@ interface BlogDetailActions {
 }
 
 const initialState: BlogDetailState = {
-  allTags: [],
   relatedPosts: [],
   comments: [],
   liked: false,
@@ -80,13 +76,10 @@ export const useBlogDetailStore = create<BlogDetailState & BlogDetailActions>(
       });
     },
 
-    fetchSidebarData: async (post) => {
+    fetchRelatedPosts: async (post) => {
       set({ sidebarLoading: true });
 
       try {
-        const allBlogsData = await getBlogsPaginated(1, 20);
-        const uniqueTags = getUniqueTags(allBlogsData.blogs ?? []);
-
         let relatedPosts: BlogPost[] = [];
         if (post.category?.id) {
           const categoryPosts = await getBlogsByCategory(post.category.id, 1, 6);
@@ -95,18 +88,10 @@ export const useBlogDetailStore = create<BlogDetailState & BlogDetailActions>(
             .slice(0, 3);
         }
 
-        set({
-          allTags: uniqueTags,
-          relatedPosts,
-          sidebarLoading: false,
-        });
+        set({ relatedPosts, sidebarLoading: false });
       } catch (error) {
-        console.error("Error fetching blog detail data:", error);
-        set({
-          allTags: [],
-          relatedPosts: [],
-          sidebarLoading: false,
-        });
+        console.error("Error fetching related posts:", error);
+        set({ relatedPosts: [], sidebarLoading: false });
       }
     },
 
