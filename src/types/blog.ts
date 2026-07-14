@@ -331,6 +331,24 @@ export interface AdjacentBlogs {
   older: BlogPost | null;
 }
 
+/** A topic in the cloud; `postCount` drives visual weighting. */
+export interface BlogTag {
+  id: Uuid;
+  name: string;
+  slug: string;
+  postCount: number;
+}
+
+/** `blog_public_tags_list` jsonb envelope (camelCase, matches blog list convention). */
+export interface PaginatedTagsResponse {
+  tags: BlogTag[];
+  totalCount: number;
+  /** Highest postCount in the capped set; constant across pages, for weighting. */
+  maxPostCount: number;
+  hasMore: boolean;
+  currentPage: number;
+}
+
 /** Public list/search RPC jsonb: camelCase envelope keys (see `blogRowJson` wire note). */
 export interface PaginatedBlogsResponse {
   blogs: BlogPost[];

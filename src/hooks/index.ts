@@ -1,5 +1,6 @@
 export { useScrollSpy } from "./use-scroll-spy";
 export { useIntersectionObserver } from "./use-intersection-observer";
+export { useInfiniteScroll } from "./use-infinite-scroll";
 export { useScrollDirection } from "./use-scroll-direction";
 export { useWindowSize } from "./use-window-size";
 export { useAuth } from "@/features/auth/hooks/useAuth";

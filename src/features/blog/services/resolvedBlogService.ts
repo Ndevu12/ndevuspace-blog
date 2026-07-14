@@ -14,6 +14,7 @@ type BlogApiContract = {
   likeBlog: typeof blogApi.likeBlog;
   getAdjacentBlogs: typeof blogApi.getAdjacentBlogs;
   incrementBlogView: typeof blogApi.incrementBlogView;
+  getPublicTags: typeof blogApi.getPublicTags;
   getAllBlogCategories: typeof blogApi.getAllBlogCategories;
 };
 
@@ -30,5 +31,6 @@ export const searchBlogsByTitle = resolved.searchBlogsByTitle;
 export const likeBlog = resolved.likeBlog;
 export const getAdjacentBlogs = resolved.getAdjacentBlogs;
 export const incrementBlogView = resolved.incrementBlogView;
+export const getPublicTags = resolved.getPublicTags;
 export const getAllBlogCategories = resolved.getAllBlogCategories;
 

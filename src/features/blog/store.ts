@@ -2,7 +2,6 @@
 
 import { create } from "zustand";
 import type { BlogPost, BlogCategory } from "@/types/blog";
-import { getUniqueTags } from "@/lib/blogUtils";
 import {
   getAllBlogCategories,
   getBlogsPaginated,
@@ -19,7 +18,6 @@ interface BlogListingState {
   // Data
   blogs: BlogPost[];
   blogCategories: BlogCategory[];
-  allTags: string[];
 
   // Filters
   activeCategory: string;
@@ -87,7 +85,6 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
     // Initial state
     blogs: [],
     blogCategories: [],
-    allTags: [],
     activeCategory: "all",
     activeTag: null,
     searchQuery: "",
@@ -108,8 +105,6 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
     hydrateFromServer: (data) => {
       const { blogs, categories, hasMore, currentPage, totalCount } = data;
 
-      const uniqueTags = getUniqueTags(blogs);
-
       // Check if there's a pending unresolved category name from URL params
       // (hydrateFromParams may have run before categories were loaded)
       const { activeCategory } = get();
@@ -129,7 +124,6 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
       set({
         blogs,
         blogCategories: categories,
-        allTags: uniqueTags,
         currentPage,
         hasMorePosts: hasMore,
         totalCount,
@@ -197,7 +191,6 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
             currentPage: data.currentPage || 1,
             hasMorePosts: data.hasMore || false,
             totalCount: data.totalCount ?? data.blogs.length,
-            allTags: getUniqueTags(data.blogs),
             error: null,
           });
         } else {
@@ -251,7 +244,6 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
           currentPage: response.currentPage,
           hasMorePosts: response.hasMore,
           totalCount: response.totalCount ?? allBlogs.length,
-          allTags: getUniqueTags(allBlogs),
         });
       } catch (error) {
         console.error("Failed to load more blogs:", error);
