@@ -111,15 +111,6 @@ export function estimateReadTime(html: string): string {
 }
 
 /**
- * Unique, non-empty tags across a set of posts (insertion order preserved).
- */
-export function getUniqueTags(posts: Pick<BlogPost, "tags">[]): string[] {
-  return Array.from(
-    new Set(posts.flatMap((post) => post.tags || []).filter(Boolean))
-  );
-}
-
-/**
  * Format a date string for display (e.g., "Jan 15, 2025")
  */
 export function formatDate(dateString: string): string {
