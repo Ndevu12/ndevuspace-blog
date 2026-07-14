@@ -10,6 +10,7 @@ import { CategoryTabs } from "./components/CategoryTabs";
 import { TopicCloud } from "./components/TopicCloud";
 import { BlogSearch } from "./components/BlogSearch";
 import { useBlogListingStore } from "./store";
+import { useHydrateTopicCloud } from "./topicCloudStore";
 import {
   Select,
   SelectContent,
@@ -23,25 +24,35 @@ import { InfiniteScrollSentinel } from "@/components/shared/InfiniteScrollSentin
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { MobileNav } from "@/components/shared/MobileNav";
 import { LayoutGrid, Search, SearchX, Tag, X } from "lucide-react";
-import { getUniqueTags } from "@/lib/blogUtils";
 import { entrance } from "@/lib/motion";
 import { useBlogUrlParams } from "@/hooks";
-import type { BlogCategory, PaginatedBlogsResponse } from "@/types/blog";
+import type {
+  BlogCategory,
+  PaginatedBlogsResponse,
+  PaginatedTagsResponse,
+} from "@/types/blog";
 
 export interface BlogPageProps {
   initialBlogs: PaginatedBlogsResponse;
   initialCategories: BlogCategory[];
+  /** Omitted when the server tag fetch fails; the client store then loads it. */
+  initialTags?: PaginatedTagsResponse;
 }
 
-export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
+export function BlogPage({
+  initialBlogs,
+  initialCategories,
+  initialTags,
+}: BlogPageProps) {
   const router = useRouter();
   const pathname = usePathname();
+
+  useHydrateTopicCloud(initialTags);
 
   // ─── Store ───
   const {
     blogs,
     blogCategories,
-    allTags,
     activeCategory,
     activeTag,
     searchQuery,
@@ -123,10 +134,6 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
   const displayHasMore = useServerData ? initialBlogs.hasMore : hasMorePosts;
   const displayCategories =
     blogCategories.length > 0 ? blogCategories : initialCategories;
-  const displayTags = useMemo(
-    () => (allTags.length > 0 ? allTags : getUniqueTags(initialBlogs.blogs)),
-    [allTags, initialBlogs.blogs]
-  );
 
   const isContentLoading =
     (blogsLoading && !useServerData) ||
@@ -321,7 +328,6 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
                 activeCategory={activeCategory}
                 onCategoryChange={onCategoryChange}
                 isSearchActive={!!searchQuery.trim()}
-                tags={displayTags}
                 onTagClick={onTagChange}
                 activeTag={activeTag}
               />
@@ -377,7 +383,6 @@ export function BlogPage({ initialBlogs, initialCategories }: BlogPageProps) {
             active: Boolean(activeTag),
             content: (close) => (
               <TopicCloud
-                tags={displayTags}
                 activeTag={activeTag}
                 onTagClick={(tag) => {
                   onTagChange(tag);
