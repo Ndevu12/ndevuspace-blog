@@ -3,7 +3,9 @@ import type {
   AdjacentBlogs,
   BlogCategory,
   BlogPost,
+  BlogTag,
   PaginatedBlogsResponse,
+  PaginatedTagsResponse,
 } from "@/types/blog";
 
 type RpcObject = Record<string, unknown>;
@@ -203,6 +205,36 @@ export async function incrementBlogView(blogId: string): Promise<number | null> 
 
   const payload = assertRpcObject(data, "Invalid view increment response.");
   return typeof payload.views_count === "number" ? payload.views_count : null;
+}
+
+function parsePaginatedTags(data: unknown): PaginatedTagsResponse {
+  const payload = assertRpcObject(data, "Invalid tags response.");
+  return {
+    tags: Array.isArray(payload.tags) ? (payload.tags as BlogTag[]) : [],
+    totalCount: typeof payload.totalCount === "number" ? payload.totalCount : 0,
+    maxPostCount:
+      typeof payload.maxPostCount === "number" ? payload.maxPostCount : 0,
+    hasMore: Boolean(payload.hasMore),
+    currentPage:
+      typeof payload.currentPage === "number" ? payload.currentPage : 1,
+  };
+}
+
+export async function getPublicTags(
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedTagsResponse> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("blog_public_tags_list", {
+    p_page: page,
+    p_limit: limit,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Failed to fetch tags.");
+  }
+
+  return parsePaginatedTags(data);
 }
 
 export async function getAllBlogCategories(): Promise<BlogCategory[]> {
