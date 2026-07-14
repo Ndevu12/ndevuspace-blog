@@ -17,6 +17,10 @@ interface TocItem {
 
 interface TableOfContentsProps {
   className?: string;
+  /** "card" — sticky sidebar Card (desktop). "bare" — just the nav, for a sheet. */
+  presentation?: "card" | "bare";
+  /** Called after a heading is selected (e.g. to close the mobile sheet). */
+  onNavigate?: () => void;
 }
 
 const slugifyHeadingText = (text: string): string => {
@@ -50,7 +54,11 @@ const getUniqueHeadingId = (baseId: string, usedIds: Set<string>): string => {
   return candidate;
 };
 
-export function TableOfContents({ className = "" }: TableOfContentsProps) {
+export function TableOfContents({
+  className = "",
+  presentation = "card",
+  onNavigate,
+}: TableOfContentsProps) {
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -175,26 +183,57 @@ export function TableOfContents({ className = "" }: TableOfContentsProps) {
       if (window.innerWidth < 1024) {
         setIsCollapsed(true);
       }
+      onNavigate?.();
     }
   };
 
-  if (!hasCompletedInitialScan) {
-    return (
-      <TocShell className={className}>
-        <p className="text-sm text-muted-foreground">
-          Loading table of contents...
-        </p>
-      </TocShell>
-    );
+  const isBare = presentation === "bare";
+
+  // Loading / empty share the shell so every state reads the same.
+  if (!hasCompletedInitialScan || tocItems.length === 0) {
+    const message = !hasCompletedInitialScan
+      ? "Loading table of contents..."
+      : "No sections available.";
+    const body = <p className="text-sm text-muted-foreground">{message}</p>;
+    return isBare ? body : <TocShell className={className}>{body}</TocShell>;
   }
 
-  if (tocItems.length === 0) {
-    return (
-      <TocShell className={className}>
-        <p className="text-sm text-muted-foreground">No sections available.</p>
-      </TocShell>
-    );
-  }
+  const nav = (
+    <ScrollArea
+      className={!isBare && isCollapsed ? "hidden lg:block" : "block"}
+    >
+      <nav
+        aria-label="Table of contents"
+        className="space-y-0.5 text-[13px] max-h-[60vh]"
+      >
+        {tocItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => handleTocClick(item.id)}
+            className={cn(
+              "relative block w-full border-l-2 border-border py-1.5 text-left leading-snug transition-colors duration-200",
+              item.level === 2 ? "pl-3.5" : "pl-6 text-xs",
+              activeId === item.id
+                ? "font-medium text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {activeId === item.id && (
+              <motion.span
+                aria-hidden
+                layoutId={railLayoutId}
+                transition={SPRING_SNAPPY}
+                className="absolute -left-0.5 inset-y-0 w-0.5 bg-primary"
+              />
+            )}
+            {item.text}
+          </button>
+        ))}
+      </nav>
+    </ScrollArea>
+  );
+
+  if (isBare) return nav;
 
   return (
     <TocShell
@@ -215,36 +254,7 @@ export function TableOfContents({ className = "" }: TableOfContentsProps) {
         </Button>
       }
     >
-      <ScrollArea className={isCollapsed ? "hidden lg:block" : "block"}>
-        <nav
-          aria-label="Table of contents"
-          className="space-y-0.5 text-[13px] max-h-[60vh]"
-        >
-          {tocItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleTocClick(item.id)}
-              className={cn(
-                "relative block w-full border-l-2 border-border py-1.5 text-left leading-snug transition-colors duration-200",
-                item.level === 2 ? "pl-3.5" : "pl-6 text-xs",
-                activeId === item.id
-                  ? "font-medium text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {activeId === item.id && (
-                <motion.span
-                  aria-hidden
-                  layoutId={railLayoutId}
-                  transition={SPRING_SNAPPY}
-                  className="absolute -left-0.5 inset-y-0 w-0.5 bg-primary"
-                />
-              )}
-              {item.text}
-            </button>
-          ))}
-        </nav>
-      </ScrollArea>
+      {nav}
     </TocShell>
   );
 }
