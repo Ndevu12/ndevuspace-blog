@@ -52,7 +52,8 @@ interface BlogDetailPageProps {
   post: BlogPost;
   categories: BlogCategory[];
   adjacent?: AdjacentBlogs;
-  initialTags: PaginatedTagsResponse;
+  /** Omitted when the server tag fetch fails; the client store then loads it. */
+  initialTags?: PaginatedTagsResponse;
 }
 
 export function BlogDetailPage({
