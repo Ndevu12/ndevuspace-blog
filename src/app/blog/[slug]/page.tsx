@@ -39,7 +39,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     getBlogBySlug(slug),
     getAllBlogCategories(),
     getAdjacentBlogs(slug).catch(() => ({ newer: null, older: null })),
-    getPublicTags(1, TOPIC_PAGE_SIZE),
+    // Topics are secondary — never let a tag-fetch failure (e.g. the RPC not
+    // yet applied) break the page. The client store loads them on mount.
+    getPublicTags(1, TOPIC_PAGE_SIZE).catch(() => undefined),
   ]);
 
   if (!post) {

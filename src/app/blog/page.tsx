@@ -15,7 +15,9 @@ export default async function BlogListingPage() {
   const [initialBlogs, initialCategories, initialTags] = await Promise.all([
     getBlogsPaginated(1, 10),
     getAllBlogCategories(),
-    getPublicTags(1, TOPIC_PAGE_SIZE),
+    // Topics are secondary — never let a tag-fetch failure (e.g. the RPC not
+    // yet applied) break the page. The client store loads them on mount.
+    getPublicTags(1, TOPIC_PAGE_SIZE).catch(() => undefined),
   ]);
 
   return (
