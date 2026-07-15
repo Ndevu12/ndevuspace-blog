@@ -22,7 +22,7 @@ jobs:
           # Full history — evil-merge detection needs the complete commit graph.
           fetch-depth: 0
 
-      - uses: Ndevu12/strix@v0.1.3
+      - uses: Ndevu12/strix@v0.1.4
         with:
           # On an infected verdict, run `saw fix --pr`: saw cleans the payload off
           # the remote default branch (main) in an isolated worktree and opens ONE
