@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TopicBadgeProps {
@@ -42,14 +43,16 @@ export function TopicBadge({
       type="button"
       onClick={onClick}
       title={`${postCount} ${postCount === 1 ? "article" : "articles"}`}
+      aria-pressed={active}
       className={cn(
-        "pressable rounded-full border transition-colors duration-150",
+        "pressable inline-flex items-center gap-1 rounded-full border transition-colors duration-150",
         weightClass(postCount, maxPostCount),
         active
           ? "border-primary bg-primary text-primary-foreground"
           : "border-border bg-secondary text-secondary-foreground hover:border-primary/50 hover:text-primary"
       )}
     >
+      {active && <Check className="h-3 w-3" aria-hidden />}
       {name}
     </button>
   );

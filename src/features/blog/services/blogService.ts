@@ -107,33 +107,24 @@ export async function getBlogsByCategory(
   return parsePaginatedBlogs(data);
 }
 
-export async function getBlogsByTag(
-  tag: string,
+export async function getBlogsByTags(
+  tags: string[],
   page: number = 1,
   limit: number = 10
-): Promise<PaginatedBlogsResponse & { filters: Record<string, unknown> }> {
+): Promise<PaginatedBlogsResponse> {
   const supabase = createClient();
-  const { data, error } = await supabase.rpc("blog_public_list_by_tag", {
-    p_tag_slug: tag,
+  const { data, error } = await supabase.rpc("blog_public_list_by_tags", {
+    p_tag_slugs: tags,
     p_page: page,
     p_limit: limit,
     p_sort: "newest",
   });
 
   if (error) {
-    throw new Error(error.message || "Failed to fetch blogs by tag.");
+    throw new Error(error.message || "Failed to fetch blogs by tags.");
   }
 
-  const paginated = parsePaginatedBlogs(data);
-  const payload = assertRpcObject(data, "Invalid blogs-by-tag response.");
-
-  return {
-    ...paginated,
-    filters:
-      payload.filters && typeof payload.filters === "object"
-        ? (payload.filters as Record<string, unknown>)
-        : {},
-  };
+  return parsePaginatedBlogs(data);
 }
 
 export async function searchBlogsByTitle(
