@@ -97,18 +97,23 @@ export async function getBlogsByCategory(
   return paginate(filtered, page, limit);
 }
 
-export async function getBlogsByTag(
-  tag: string,
+export async function getBlogsByTags(
+  tags: string[],
   page: number = 1,
-  limit: number = 10,
-  _sortBy?: string,
-  _sortOrder?: string,
-  _status?: string
-): Promise<PaginatedBlogsResponse & { filters: Record<string, unknown> }> {
-  const filtered = dummyBlogs.filter((b) =>
-    b.tags.some((t) => t.toLowerCase() === tag.toLowerCase())
+  limit: number = 10
+): Promise<PaginatedBlogsResponse> {
+  const needles = new Set(
+    tags.map((t) => t.trim().toLowerCase()).filter(Boolean)
   );
-  return { ...paginate(filtered, page, limit), filters: {} };
+  // Empty selection = no tag filter (mirrors the RPC), so return everything.
+  const matched =
+    needles.size === 0
+      ? dummyBlogs
+      : dummyBlogs.filter((b) =>
+          // OR / union: a post matches if it carries any selected tag.
+          b.tags.some((t) => needles.has(t.toLowerCase()))
+        );
+  return paginate(sortByNewest(matched), page, limit);
 }
 
 export async function searchBlogsByTitle(

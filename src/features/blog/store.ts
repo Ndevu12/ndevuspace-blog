@@ -6,7 +6,7 @@ import {
   getAllBlogCategories,
   getBlogsPaginated,
   getBlogsByCategory,
-  getBlogsByTag,
+  getBlogsByTags,
   searchBlogsByTitle,
 } from "./services/resolvedBlogService";
 
@@ -21,7 +21,8 @@ interface BlogListingState {
 
   // Filters
   activeCategory: string;
-  activeTag: string | null;
+  /** Selected topic filter — OR/union semantics (a post matches any of these). */
+  activeTags: string[];
   searchQuery: string;
   sortBy: SortOption;
 
@@ -59,7 +60,7 @@ interface BlogListingActions {
 
   // Filter actions
   setActiveCategory: (categoryId: string) => void;
-  setActiveTag: (tag: string | null) => void;
+  setActiveTags: (tags: string[]) => void;
   setSearchQuery: (query: string) => void;
   setSortBy: (sort: SortOption) => void;
 
@@ -67,11 +68,12 @@ interface BlogListingActions {
   handleSearch: (query: string) => void;
   clearSearch: () => void;
   handleCategoryChange: (categoryId: string) => void;
-  handleTagChange: (tag: string) => void;
+  /** Replace the topic filter with `tags` (clears category/search, resets page). */
+  applyTagFilter: (tags: string[]) => void;
   clearAllFilters: () => void;
 
   // Hydration from URL params
-  hydrateFromParams: (params: { tag?: string | null; category?: string | null; search?: string | null }) => void;
+  hydrateFromParams: (params: { tags?: string[] | null; category?: string | null; search?: string | null }) => void;
 }
 
 // ─── Constants ───
@@ -86,7 +88,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
     blogs: [],
     blogCategories: [],
     activeCategory: "all",
-    activeTag: null,
+    activeTags: [],
     searchQuery: "",
     sortBy: "newest",
     currentPage: 1,
@@ -148,7 +150,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
     },
 
     fetchFilteredBlogs: async (source = "initial") => {
-      const { activeCategory, activeTag, searchQuery, blogCategories } = get();
+      const { activeCategory, activeTags, searchQuery, blogCategories } = get();
 
       // Set loading state based on source
       const loadingUpdate: Partial<BlogListingState> = {};
@@ -172,8 +174,8 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
 
         if (searchQuery.trim()) {
           data = await searchBlogsByTitle(searchQuery.trim(), 1, POSTS_PER_PAGE);
-        } else if (activeTag) {
-          data = await getBlogsByTag(activeTag, 1, POSTS_PER_PAGE);
+        } else if (activeTags.length > 0) {
+          data = await getBlogsByTags(activeTags, 1, POSTS_PER_PAGE);
         } else if (activeCategory && activeCategory !== "all") {
           const category = blogCategories.find((cat) => cat.id === activeCategory);
           if (category) {
@@ -215,7 +217,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
     },
 
     loadMorePosts: async () => {
-      const { loadingMore, hasMorePosts, currentPage, searchQuery, activeCategory, blogCategories, blogs } = get();
+      const { loadingMore, hasMorePosts, currentPage, searchQuery, activeTags, activeCategory, blogCategories, blogs } = get();
       if (loadingMore || !hasMorePosts) return;
 
       set({ loadingMore: true });
@@ -226,6 +228,8 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
 
         if (searchQuery.trim()) {
           response = await searchBlogsByTitle(searchQuery, nextPage, POSTS_PER_PAGE);
+        } else if (activeTags.length > 0) {
+          response = await getBlogsByTags(activeTags, nextPage, POSTS_PER_PAGE);
         } else if (activeCategory !== "all") {
           const selectedCategory = blogCategories.find((cat) => cat.id === activeCategory);
           if (selectedCategory) {
@@ -255,7 +259,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
     // ─── Filter Actions ───
 
     setActiveCategory: (categoryId) => set({ activeCategory: categoryId }),
-    setActiveTag: (tag) => set({ activeTag: tag }),
+    setActiveTags: (tags) => set({ activeTags: tags }),
     setSearchQuery: (query) => set({ searchQuery: query }),
     setSortBy: (sort) => set({ sortBy: sort }),
 
@@ -268,6 +272,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         currentPage: 1,
         error: null,
         activeCategory: query.trim() && state.activeCategory !== "all" ? "all" : state.activeCategory,
+        activeTags: query.trim() ? [] : state.activeTags,
       });
       // Fetch is triggered by the component via useEffect watching searchQuery
     },
@@ -281,14 +286,14 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
         activeCategory: categoryId,
         currentPage: 1,
         error: null,
-        activeTag: null,
+        activeTags: [],
         searchQuery: "",
       });
     },
 
-    handleTagChange: (tag) => {
+    applyTagFilter: (tags) => {
       set({
-        activeTag: tag,
+        activeTags: tags,
         currentPage: 1,
         error: null,
         searchQuery: "",
@@ -300,21 +305,21 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
       set({
         searchQuery: "",
         activeCategory: "all",
-        activeTag: null,
+        activeTags: [],
         currentPage: 1,
         error: null,
       });
     },
 
-    hydrateFromParams: ({ tag, category, search }) => {
+    hydrateFromParams: ({ tags, category, search }) => {
       const updates: Partial<BlogListingState> = {};
 
       if (search) {
         updates.searchQuery = search;
         updates.activeCategory = "all";
-        updates.activeTag = null;
-      } else if (tag) {
-        updates.activeTag = tag;
+        updates.activeTags = [];
+      } else if (tags && tags.length > 0) {
+        updates.activeTags = tags;
         updates.activeCategory = "all";
         updates.searchQuery = "";
       } else if (category) {
@@ -329,7 +334,7 @@ export const useBlogListingStore = create<BlogListingState & BlogListingActions>
           // If categories aren't loaded yet, store the name and resolve later
           updates.activeCategory = category;
         }
-        updates.activeTag = null;
+        updates.activeTags = [];
         updates.searchQuery = "";
       }
 

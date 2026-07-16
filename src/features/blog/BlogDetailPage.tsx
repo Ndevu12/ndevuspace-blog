@@ -92,7 +92,7 @@ export function BlogDetailPage({
   }, [post, initializePost, fetchRelatedPosts, trackView, reset]);
 
   const handleTagClick = (tag: string) => {
-    router.push(`/blog?tag=${encodeURIComponent(tag)}`);
+    router.push(`/blog?tags=${encodeURIComponent(tag)}`);
   };
 
   const handleSearch = (query: string) => {
@@ -338,7 +338,7 @@ export function BlogDetailPage({
                 onCategoryChange={handleCategoryChange}
                 isSearchActive={false}
                 onTagClick={handleTagClick}
-                activeTag={null}
+                activeTags={[]}
               />
             </div>
           </aside>
