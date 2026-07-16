@@ -8,7 +8,8 @@ import { useTopicCloudStore } from "../topicCloudStore";
 import { TopicBadge } from "./TopicBadge";
 
 interface TopicCloudProps {
-  activeTag?: string | null;
+  /** Currently selected topics (OR filter) — badges for these render active. */
+  activeTags?: string[];
   onTagClick?: (tag: string) => void;
 }
 
@@ -17,7 +18,7 @@ interface TopicCloudProps {
  * listing and article pages share one fetch) and infinite-scrolls the capped
  * set in alphabetical batches inside its own bounded panel.
  */
-export function TopicCloud({ activeTag, onTagClick }: TopicCloudProps) {
+export function TopicCloud({ activeTags = [], onTagClick }: TopicCloudProps) {
   const { topics, maxPostCount, hasMore, loading, initialized, error } =
     useTopicCloudStore();
   const ensureLoaded = useTopicCloudStore((s) => s.ensureLoaded);
@@ -66,7 +67,7 @@ export function TopicCloud({ activeTag, onTagClick }: TopicCloudProps) {
               name={topic.name}
               postCount={topic.postCount}
               maxPostCount={maxPostCount}
-              active={activeTag === topic.name}
+              active={activeTags.includes(topic.name)}
               onClick={() => onTagClick?.(topic.name)}
             />
           ))}
