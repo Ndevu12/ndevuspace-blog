@@ -19,8 +19,9 @@ export function useBlogUrlParams() {
 
   const {
     blogCategories,
+    activeTags,
     handleCategoryChange,
-    handleTagChange,
+    applyTagFilter,
     handleSearch,
     clearSearch,
     clearAllFilters,
@@ -35,13 +36,14 @@ export function useBlogUrlParams() {
   useEffect(() => {
     const syncFromLocation = () => {
       const params = new URLSearchParams(window.location.search);
-      const tagParam = params.get("tag");
+      // Prefer the multi-tag `tags=a,b`; fall back to the legacy single `tag=a`.
+      const tags = parseTagsParam(params.get("tags") ?? params.get("tag"));
       const categoryParam = params.get("category");
       const searchParam = params.get("search");
 
-      if (tagParam || categoryParam || searchParam) {
+      if (tags.length > 0 || categoryParam || searchParam) {
         hydrateFromParams({
-          tag: tagParam,
+          tags,
           category: categoryParam,
           search: searchParam,
         });
@@ -55,7 +57,7 @@ export function useBlogUrlParams() {
 
   // ── Helper: push current filter state into the URL ──────────────────────
   const updateUrlParams = useCallback(
-    (params: { category?: string; tag?: string | null; search?: string }) => {
+    (params: { category?: string; tags?: string[]; search?: string }) => {
       const newParams = new URLSearchParams();
 
       if (params.category && params.category !== "all") {
@@ -63,8 +65,8 @@ export function useBlogUrlParams() {
         const cat = blogCategories.find((c) => c.id === params.category);
         newParams.set("category", cat ? cat.name : params.category);
       }
-      if (params.tag) {
-        newParams.set("tag", params.tag);
+      if (params.tags && params.tags.length > 0) {
+        newParams.set("tags", params.tags.join(","));
       }
       if (params.search) {
         newParams.set("search", params.search);
@@ -85,12 +87,16 @@ export function useBlogUrlParams() {
     [handleCategoryChange, updateUrlParams],
   );
 
-  const onTagChange = useCallback(
+  // Toggle a topic in/out of the OR-filter, then mirror the result to the URL.
+  const onTagToggle = useCallback(
     (tag: string) => {
-      handleTagChange(tag);
-      updateUrlParams({ tag });
+      const next = activeTags.includes(tag)
+        ? activeTags.filter((t) => t !== tag)
+        : [...activeTags, tag];
+      applyTagFilter(next);
+      updateUrlParams({ tags: next });
     },
-    [handleTagChange, updateUrlParams],
+    [activeTags, applyTagFilter, updateUrlParams],
   );
 
   const onSearch = useCallback(
@@ -113,9 +119,24 @@ export function useBlogUrlParams() {
 
   return {
     onCategoryChange,
-    onTagChange,
+    onTagToggle,
     onSearch,
     onClearSearch,
     onClearAllFilters,
   };
+}
+
+/** Parse a `tags`/`tag` query value ("a,b,c") into a trimmed, de-duped list. */
+function parseTagsParam(raw: string | null): string[] {
+  if (!raw) return [];
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const part of raw.split(",")) {
+    const tag = part.trim();
+    if (tag && !seen.has(tag)) {
+      seen.add(tag);
+      result.push(tag);
+    }
+  }
+  return result;
 }
