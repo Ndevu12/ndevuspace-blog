@@ -54,7 +54,7 @@ export function BlogPage({
     blogs,
     blogCategories,
     activeCategory,
-    activeTag,
+    activeTags,
     searchQuery,
     sortBy,
     hasMorePosts,
@@ -72,7 +72,7 @@ export function BlogPage({
   } = useBlogListingStore();
 
   // ─── URL-synced filter actions ───
-  const { onCategoryChange, onTagChange, onSearch, onClearSearch, onClearAllFilters } =
+  const { onCategoryChange, onTagToggle, onSearch, onClearSearch, onClearAllFilters } =
     useBlogUrlParams();
 
   const prefersReducedMotion = useReducedMotion();
@@ -94,17 +94,20 @@ export function BlogPage({
 
   // Fetch blogs when filters change (skip initial only if no URL params are active,
   // since server data is unfiltered)
+  // Join the tags into a stable primitive so the effect only re-runs when the
+  // selection actually changes (not on every render's fresh array reference).
+  const activeTagsKey = activeTags.join(",");
   const initialRender = useRef(true);
   useEffect(() => {
     if (initialRender.current) {
       initialRender.current = false;
       // If a filter is already active from URL params, fetch filtered data
-      if (activeCategory === "all" && !activeTag && !searchQuery) {
+      if (activeCategory === "all" && !activeTagsKey && !searchQuery) {
         return;
       }
     }
     fetchFilteredBlogs();
-  }, [activeCategory, activeTag, searchQuery, fetchFilteredBlogs]);
+  }, [activeCategory, activeTagsKey, searchQuery, fetchFilteredBlogs]);
 
   // Access-denied redirect notice — reads location.search in an effect so the
   // page stays prerenderable (see useBlogUrlParams for the same constraint).
@@ -173,7 +176,7 @@ export function BlogPage({
   }, [displayBlogs, sortBy]);
 
   const hasActiveFilters =
-    Boolean(searchQuery.trim()) || Boolean(activeTag) || activeCategory !== "all";
+    Boolean(searchQuery.trim()) || activeTags.length > 0 || activeCategory !== "all";
 
   const showingMeta =
     !isContentLoading && !error && filteredPosts.length > 0
@@ -212,20 +215,35 @@ export function BlogPage({
           </div>
         )}
 
-        {activeTag && (
+        {activeTags.length > 0 && (
           <div className="max-w-6xl mx-auto px-4 mt-4 pb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-meta">Filtering by tag:</span>
-              <Badge variant="default" className="gap-1">
-                #{activeTag}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-meta">
+                {activeTags.length === 1
+                  ? "Filtering by topic:"
+                  : "Filtering by topics:"}
+              </span>
+              {activeTags.map((tag) => (
+                <Badge key={tag} variant="default" className="gap-1">
+                  #{tag}
+                  <button
+                    onClick={() => onTagToggle(tag)}
+                    className="ml-1 hover:text-primary-foreground/80"
+                    title={`Remove ${tag}`}
+                    aria-label={`Remove ${tag} filter`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+              {activeTags.length > 1 && (
                 <button
                   onClick={onClearAllFilters}
-                  className="ml-1 hover:text-primary-foreground/80"
-                  title="Clear tag filter"
+                  className="text-sm text-muted-foreground underline hover:text-primary"
                 >
-                  <X className="h-3 w-3" />
+                  Clear all
                 </button>
-              </Badge>
+              )}
             </div>
           </div>
         )}
@@ -328,8 +346,8 @@ export function BlogPage({
                 activeCategory={activeCategory}
                 onCategoryChange={onCategoryChange}
                 isSearchActive={!!searchQuery.trim()}
-                onTagClick={onTagChange}
-                activeTag={activeTag}
+                onTagClick={onTagToggle}
+                activeTags={activeTags}
               />
             </div>
           </aside>
@@ -380,14 +398,12 @@ export function BlogPage({
             label: "Topics",
             icon: <Tag />,
             title: "Topic Cloud",
-            active: Boolean(activeTag),
-            content: (close) => (
+            active: activeTags.length > 0,
+            content: () => (
               <TopicCloud
-                activeTag={activeTag}
-                onTagClick={(tag) => {
-                  onTagChange(tag);
-                  close();
-                }}
+                activeTags={activeTags}
+                // Keep the sheet open so several topics can be toggled at once.
+                onTagClick={onTagToggle}
               />
             ),
           },

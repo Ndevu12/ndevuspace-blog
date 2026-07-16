@@ -7,7 +7,7 @@ import { TopicCloud } from "./TopicCloud";
 
 export interface BlogSidebarProps {
   onTagClick?: (tag: string) => void;
-  activeTag?: string | null;
+  activeTags?: string[];
   categories?: BlogCategory[];
   activeCategory?: string;
   onCategoryChange?: (categoryId: string) => void;
@@ -18,7 +18,7 @@ export interface BlogSidebarProps {
 
 export function BlogSidebar({
   onTagClick,
-  activeTag,
+  activeTags,
   categories,
   activeCategory,
   onCategoryChange,
@@ -59,7 +59,7 @@ export function BlogSidebar({
           <h3 className="text-eyebrow">Topic Cloud</h3>
         </CardHeader>
         <CardContent>
-          <TopicCloud activeTag={activeTag} onTagClick={onTagClick} />
+          <TopicCloud activeTags={activeTags} onTagClick={onTagClick} />
         </CardContent>
       </Card>
     </div>
