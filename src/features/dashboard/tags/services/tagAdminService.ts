@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { assertRpcObject, type RpcObject } from "@/lib/supabase/rpc";
 
 /** A tag as seen in the admin tag manager. */
 export interface AdminTag {
@@ -10,14 +11,7 @@ export interface AdminTag {
   updatedAt: string;
 }
 
-type RpcRecord = Record<string, unknown>;
-
-function toRpcRecord(data: unknown, message: string): RpcRecord {
-  if (!data || typeof data !== "object") {
-    throw new Error(message);
-  }
-  return data as RpcRecord;
-}
+type RpcRecord = RpcObject;
 
 function parseTag(raw: unknown): AdminTag | null {
   if (!raw || typeof raw !== "object") return null;
@@ -39,7 +33,7 @@ export async function getAdminTags(): Promise<AdminTag[]> {
   if (error) {
     throw new Error(error.message || "Failed to fetch tags.");
   }
-  const payload = toRpcRecord(data, "Invalid tags response.");
+  const payload = assertRpcObject(data, "Invalid tags response.");
   const tags = Array.isArray(payload.tags) ? payload.tags : [];
   return tags.map(parseTag).filter((t): t is AdminTag => t !== null);
 }
@@ -81,7 +75,7 @@ export async function deleteTag(id: string): Promise<void> {
   if (error) {
     throw new Error(error.message || "Failed to delete tag.");
   }
-  const payload = toRpcRecord(data, "Invalid delete-tag response.");
+  const payload = assertRpcObject(data, "Invalid delete-tag response.");
   if (!payload.ok) throw new Error("Tag delete was not acknowledged.");
 }
 
@@ -97,7 +91,7 @@ export async function mergeTags(
   if (error) {
     throw new Error(error.message || "Failed to merge tags.");
   }
-  const payload = toRpcRecord(data, "Invalid merge-tags response.");
+  const payload = assertRpcObject(data, "Invalid merge-tags response.");
   if (!payload.ok) throw new Error("Tag merge was not acknowledged.");
   return {
     mergedCount: typeof payload.mergedCount === "number" ? payload.mergedCount : 0,

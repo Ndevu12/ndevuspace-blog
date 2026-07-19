@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { assertRpcObject, type RpcObject } from "@/lib/supabase/rpc";
 import type {
   BlogAdminFilters,
   BlogAdminListRpcParams,
@@ -14,14 +15,7 @@ import type {
 } from "@/types/admin";
 import type { BlogPost } from "@/types/blog";
 
-type RpcRecord = Record<string, unknown>;
-
-function toRpcRecord(data: unknown, errorMessage: string): RpcRecord {
-  if (!data || typeof data !== "object") {
-    throw new Error(errorMessage);
-  }
-  return data as RpcRecord;
-}
+type RpcRecord = RpcObject;
 
 function normalizeBlogPost(post: BlogPost): BlogPost {
   const normalizedId = post.id ?? "";
@@ -74,7 +68,7 @@ function parseTotalCount(payload: RpcRecord): number {
 }
 
 function parseAdminResponse(data: unknown): BlogAdminResponse {
-  const payload = toRpcRecord(data, "Invalid admin blogs response.");
+  const payload = assertRpcObject(data, "Invalid admin blogs response.");
   const blogs = Array.isArray(payload.blogs)
     ? (payload.blogs as BlogPost[]).map(normalizeBlogPost)
     : [];
@@ -282,7 +276,7 @@ export async function deleteBlog(blogId: string): Promise<void> {
     throw new Error(error.message || "Failed to delete blog.");
   }
 
-  const payload = toRpcRecord(data, "Invalid blog delete response.");
+  const payload = assertRpcObject(data, "Invalid blog delete response.");
   if (!payload.ok) {
     throw new Error("Blog delete was not acknowledged.");
   }
@@ -296,7 +290,7 @@ export async function getDashboardStats(): Promise<BlogDashboardStatsResponse> {
     throw new Error(error.message || "Failed to fetch dashboard stats.");
   }
 
-  const payload = toRpcRecord(data, "Invalid dashboard stats response.");
+  const payload = assertRpcObject(data, "Invalid dashboard stats response.");
   return {
     total_blogs: Number(payload.total_blogs ?? 0),
     published_count: Number(payload.published_count ?? 0),
@@ -317,7 +311,7 @@ export async function getDashboardRecentActivity(limit: number = 5): Promise<Blo
     throw new Error(error.message || "Failed to fetch dashboard recent activity.");
   }
 
-  const payload = toRpcRecord(data, "Invalid dashboard recent activity response.");
+  const payload = assertRpcObject(data, "Invalid dashboard recent activity response.");
   return {
     items: Array.isArray(payload.items)
       ? (payload.items as BlogDashboardRecentActivityResponse["items"])
@@ -343,7 +337,7 @@ export async function getDashboardTimeseries(
     throw new Error(error.message || "Failed to fetch dashboard timeseries.");
   }
 
-  const payload = toRpcRecord(data, "Invalid dashboard timeseries response.");
+  const payload = assertRpcObject(data, "Invalid dashboard timeseries response.");
   return {
     points: Array.isArray(payload.points)
       ? (payload.points as BlogDashboardTimeseriesResponse["points"])
@@ -359,7 +353,7 @@ export async function getDashboardCategoryDistribution(): Promise<BlogDashboardC
     throw new Error(error.message || "Failed to fetch dashboard category distribution.");
   }
 
-  const payload = toRpcRecord(data, "Invalid dashboard category distribution response.");
+  const payload = assertRpcObject(data, "Invalid dashboard category distribution response.");
   const categories = Array.isArray(payload.categories) ? payload.categories : [];
 
   return {
