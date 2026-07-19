@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { assertRpcObject } from "@/lib/supabase/rpc";
 import type {
   AdjacentBlogs,
   BlogCategory,
@@ -7,15 +8,6 @@ import type {
   PaginatedBlogsResponse,
   PaginatedTagsResponse,
 } from "@/types/blog";
-
-type RpcObject = Record<string, unknown>;
-
-function assertRpcObject(data: unknown, errorMessage: string): RpcObject {
-  if (!data || typeof data !== "object") {
-    throw new Error(errorMessage);
-  }
-  return data as RpcObject;
-}
 
 function parsePaginatedBlogs(data: unknown): PaginatedBlogsResponse {
   const payload = assertRpcObject(data, "Invalid blog list response.");
