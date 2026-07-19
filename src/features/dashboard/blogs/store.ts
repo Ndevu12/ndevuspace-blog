@@ -1,7 +1,17 @@
 import { create } from "zustand";
-import type { BlogAdminFilters, BlogAdminPagination } from "@/types/admin";
+import type {
+  BlogAdminFilters,
+  BlogAdminPagination,
+  BlogStatus,
+} from "@/types/admin";
 import type { BlogPost } from "@/types/blog";
 import { dashboardBlogService } from "@/features/dashboard/services/dashboardBlogService";
+
+/** Outcome of a bulk operation — how many rows succeeded vs. failed. */
+export interface BulkResult {
+  ok: number;
+  failed: number;
+}
 
 const DEFAULT_FILTERS: BlogAdminFilters = {
   page: 1,
@@ -28,6 +38,8 @@ interface AllBlogsState {
   filters: BlogAdminFilters;
   searchInput: string;
   filtersVisible: boolean;
+  /** Row IDs ticked for a bulk action (scoped to the current page/filter view). */
+  selectedIds: string[];
 
   // Actions
   setSearchInput: (value: string) => void;
@@ -36,6 +48,13 @@ interface AllBlogsState {
   clearFilters: () => void;
   loadBlogs: () => Promise<void>;
   deleteBlog: (blogId: string) => Promise<void>;
+
+  // Bulk selection
+  toggleSelected: (blogId: string) => void;
+  setSelected: (ids: string[]) => void;
+  clearSelection: () => void;
+  bulkUpdateStatus: (status: BlogStatus) => Promise<BulkResult>;
+  bulkDelete: () => Promise<BulkResult>;
 }
 
 export const useAllBlogsStore = create<AllBlogsState>((set, get) => ({
@@ -46,6 +65,7 @@ export const useAllBlogsStore = create<AllBlogsState>((set, get) => ({
   filters: DEFAULT_FILTERS,
   searchInput: "",
   filtersVisible: false,
+  selectedIds: [],
 
   setSearchInput: (value) => set({ searchInput: value }),
 
@@ -72,6 +92,8 @@ export const useAllBlogsStore = create<AllBlogsState>((set, get) => ({
         blogs: response.blogs,
         pagination: response.pagination,
         loading: false,
+        // Drop any selection that referenced the previous page/filter view.
+        selectedIds: [],
       });
     } catch (err) {
       console.error("Error loading blogs:", err);
@@ -79,6 +101,7 @@ export const useAllBlogsStore = create<AllBlogsState>((set, get) => ({
         error: "Failed to load blogs. Please try again.",
         blogs: [],
         loading: false,
+        selectedIds: [],
       });
     }
   },
@@ -87,5 +110,38 @@ export const useAllBlogsStore = create<AllBlogsState>((set, get) => ({
     await dashboardBlogService.deleteBlog(blogId);
     // Reload after deletion
     await get().loadBlogs();
+  },
+
+  // ─── Bulk selection ───
+
+  toggleSelected: (blogId) =>
+    set((state) => ({
+      selectedIds: state.selectedIds.includes(blogId)
+        ? state.selectedIds.filter((id) => id !== blogId)
+        : [...state.selectedIds, blogId],
+    })),
+
+  setSelected: (ids) => set({ selectedIds: ids }),
+
+  clearSelection: () => set({ selectedIds: [] }),
+
+  bulkUpdateStatus: async (status) => {
+    const ids = get().selectedIds;
+    const results = await Promise.allSettled(
+      ids.map((id) => dashboardBlogService.updateBlogStatus(id, status))
+    );
+    const failed = results.filter((r) => r.status === "rejected").length;
+    await get().loadBlogs(); // also clears the selection
+    return { ok: ids.length - failed, failed };
+  },
+
+  bulkDelete: async () => {
+    const ids = get().selectedIds;
+    const results = await Promise.allSettled(
+      ids.map((id) => dashboardBlogService.deleteBlog(id))
+    );
+    const failed = results.filter((r) => r.status === "rejected").length;
+    await get().loadBlogs(); // also clears the selection
+    return { ok: ids.length - failed, failed };
   },
 }));
