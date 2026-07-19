@@ -268,7 +268,7 @@ export async function updateBlogStatus(blogId: string, status: BlogStatus): Prom
 
 export async function scheduleBlog(blogId: string, publishAtIso: string): Promise<void> {
   const supabase = createClient();
-  const { error } = await supabase.rpc("blog_admin_schedule", {
+  const { error } = await supabase.rpc("blog_schedule_post", {
     p_blog_id: blogId,
     p_publish_at: publishAtIso,
   });
