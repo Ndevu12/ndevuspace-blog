@@ -266,6 +266,18 @@ export async function updateBlogStatus(blogId: string, status: BlogStatus): Prom
   }
 }
 
+export async function scheduleBlog(blogId: string, publishAtIso: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("blog_admin_schedule", {
+    p_blog_id: blogId,
+    p_publish_at: publishAtIso,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Failed to schedule blog.");
+  }
+}
+
 export async function deleteBlog(blogId: string): Promise<void> {
   const supabase = createClient();
   const { data, error } = await supabase.rpc("blog_admin_delete", {
@@ -372,6 +384,7 @@ export const dashboardBlogService = {
   createBlog,
   updateBlog,
   updateBlogStatus,
+  scheduleBlog,
   deleteBlog,
   getDashboardStats,
   getDashboardRecentActivity,

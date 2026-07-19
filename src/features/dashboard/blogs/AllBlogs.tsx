@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -16,6 +16,8 @@ import {
   Loader2,
   RefreshCw,
   X,
+  CalendarClock,
+  Rocket,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -55,6 +57,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAllBlogsStore } from "./store";
 import { useDebouncedValue } from "@/hooks";
@@ -84,10 +95,16 @@ export function AllBlogs() {
     clearSelection,
     bulkUpdateStatus,
     bulkDelete,
+    scheduleBlog,
+    publishNow,
   } = useAllBlogsStore();
 
   const allSelected =
     blogs.length > 0 && blogs.every((b) => selectedIds.includes(b.id));
+
+  // Schedule dialog: which post, and the chosen datetime-local value.
+  const [scheduleFor, setScheduleFor] = useState<{ id: string; title: string } | null>(null);
+  const [scheduleAt, setScheduleAt] = useState("");
 
   // Debounced search — sync searchInput → filters.search
   const debouncedSearch = useDebouncedValue(searchInput, 300);
@@ -156,6 +173,8 @@ export function AllBlogs() {
     switch (status) {
       case "published":
         return "default" as const;
+      case "scheduled":
+        return "outline" as const;
       case "draft":
         return "secondary" as const;
       case "archived":
@@ -163,6 +182,47 @@ export function AllBlogs() {
       default:
         return "secondary" as const;
     }
+  }
+
+  function openSchedule(blog: { id: string; title: string }) {
+    // Default the picker to one hour out, formatted for datetime-local (local tz).
+    const oneHourOut = new Date(Date.now() + 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const local = `${oneHourOut.getFullYear()}-${pad(oneHourOut.getMonth() + 1)}-${pad(
+      oneHourOut.getDate()
+    )}T${pad(oneHourOut.getHours())}:${pad(oneHourOut.getMinutes())}`;
+    setScheduleAt(local);
+    setScheduleFor(blog);
+  }
+
+  function handleConfirmSchedule() {
+    if (!scheduleFor || !scheduleAt) return;
+    const iso = new Date(scheduleAt).toISOString();
+    if (Number.isNaN(Date.parse(iso)) || new Date(iso) <= new Date()) {
+      toast.error("Pick a time in the future");
+      return;
+    }
+    const target = scheduleFor;
+    startTransition(async () => {
+      try {
+        await scheduleBlog(target.id, iso);
+        toast.success(`“${target.title}” scheduled`);
+        setScheduleFor(null);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to schedule");
+      }
+    });
+  }
+
+  function handlePublishNow(blog: { id: string; title: string }) {
+    startTransition(async () => {
+      try {
+        await publishNow(blog.id);
+        toast.success(`“${blog.title}” published`);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to publish");
+      }
+    });
   }
 
   return (
@@ -486,6 +546,26 @@ export function AllBlogs() {
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        {blog.status === "scheduled" ? (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handlePublishNow({ id: blog.id, title: blog.title })
+                            }
+                          >
+                            <Rocket className="mr-2 h-4 w-4" />
+                            Publish now
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              openSchedule({ id: blog.id, title: blog.title })
+                            }
+                          >
+                            <CalendarClock className="mr-2 h-4 w-4" />
+                            Schedule…
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
                         <AlertDialog>
                           <AlertDialogTrigger
                             nativeButton={false}
@@ -561,6 +641,46 @@ export function AllBlogs() {
           </div>
         </div>
       )}
+
+      {/* Schedule dialog */}
+      <Dialog
+        open={scheduleFor !== null}
+        onOpenChange={(open) => {
+          if (!open) setScheduleFor(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schedule post</DialogTitle>
+            <DialogDescription>
+              Pick when “{scheduleFor?.title}” should go live. It stays hidden
+              until then, and publishes automatically — no further action needed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="publish-at">Publish at</Label>
+            <Input
+              id="publish-at"
+              type="datetime-local"
+              value={scheduleAt}
+              onChange={(e) => setScheduleAt(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Uses your local time zone. Publishing runs on a one-minute cron, so
+              it may go live up to a minute after this time.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setScheduleFor(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmSchedule} disabled={isPending || !scheduleAt}>
+              {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Schedule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

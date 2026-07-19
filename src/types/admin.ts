@@ -6,7 +6,7 @@ import type { BlogPost, BlogCategory, IsoDateString } from "./blog";
 
 // ─── Admin Filters & Pagination ───
 
-export type BlogStatus = "published" | "draft" | "archived";
+export type BlogStatus = "published" | "draft" | "archived" | "scheduled";
 export type BlogAdminRpcSortBy =
   | "created_at"
   | "updated_at"
