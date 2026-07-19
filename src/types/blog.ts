@@ -55,7 +55,9 @@ export interface BlogPost {
   metaDescription?: string;
   likes?: number;
   comments?: BlogComment[];
-  status?: "published" | "draft" | "archived";
+  status?: "published" | "draft" | "archived" | "scheduled";
+  /** For scheduled posts: the UTC time the cron job will publish it. */
+  publishAt?: IsoDateString;
   viewsCount?: number;
   likesCount?: number;
 }
