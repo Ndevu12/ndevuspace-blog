@@ -103,6 +103,8 @@ export interface BlogAdminRpcPayload {
   meta_title?: string | null;
   meta_description?: string | null;
   status?: BlogStatus;
+  /** ISO datetime; required by the RPC when status = 'scheduled'. */
+  publish_at?: string | null;
   author_image?: string | null;
   is_new?: boolean;
   is_featured?: boolean;

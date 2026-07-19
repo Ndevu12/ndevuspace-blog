@@ -22,6 +22,7 @@ DECLARE
   v_admin uuid := gen_random_uuid();
   v_user uuid := gen_random_uuid();
   v_blog uuid;
+  v_blog2 uuid;
   v_res jsonb;
   v_status text;
   v_published_at timestamptz;
@@ -121,6 +122,49 @@ BEGIN
   END IF;
   IF v_published_at <> v_publish_at THEN
     RAISE EXCEPTION 'FAIL: published_at (%) should equal publish_at (%)', v_published_at, v_publish_at;
+  END IF;
+
+  -- ── Native scheduling through the create/update RPCs (the editor path) ──
+  -- 6) Create a post already scheduled.
+  v_res := public.blog_admin_create(jsonb_build_object(
+    'title', 'Created Scheduled',
+    'content', 'body',
+    'status', 'scheduled',
+    'publish_at', (timezone('utc', now()) + interval '2 days')::text
+  ));
+  v_blog2 := (v_res ->> 'id')::uuid;
+  IF (v_res ->> 'publishAt') IS NULL THEN
+    RAISE EXCEPTION 'FAIL: created row json is missing publishAt';
+  END IF;
+  SELECT status::text, publish_at INTO v_status, v_publish_at
+  FROM public.blogs WHERE id = v_blog2;
+  IF v_status <> 'scheduled' OR v_publish_at IS NULL THEN
+    RAISE EXCEPTION 'FAIL: create-with-schedule state wrong (status=%, publish_at=%)', v_status, v_publish_at;
+  END IF;
+
+  -- 7) Creating scheduled without publish_at is rejected.
+  BEGIN
+    PERFORM public.blog_admin_create(jsonb_build_object(
+      'title', 'No Time', 'content', 'b', 'status', 'scheduled'));
+    RAISE EXCEPTION 'FAIL: scheduled create without publish_at was accepted';
+  EXCEPTION WHEN sqlstate '23514' THEN NULL; END;
+
+  -- 8) Leaving scheduled via update clears publish_at.
+  PERFORM public.blog_admin_update(v_blog2, jsonb_build_object('status', 'draft'));
+  SELECT status::text, publish_at INTO v_status, v_publish_at
+  FROM public.blogs WHERE id = v_blog2;
+  IF v_status <> 'draft' OR v_publish_at IS NOT NULL THEN
+    RAISE EXCEPTION 'FAIL: leaving scheduled did not clear publish_at (status=%, publish_at=%)', v_status, v_publish_at;
+  END IF;
+
+  -- 9) Update back into scheduled with a fresh time.
+  PERFORM public.blog_admin_update(v_blog2, jsonb_build_object(
+    'status', 'scheduled',
+    'publish_at', (timezone('utc', now()) + interval '3 days')::text));
+  SELECT status::text, publish_at INTO v_status, v_publish_at
+  FROM public.blogs WHERE id = v_blog2;
+  IF v_status <> 'scheduled' OR v_publish_at IS NULL THEN
+    RAISE EXCEPTION 'FAIL: update-to-scheduled did not persist (status=%, publish_at=%)', v_status, v_publish_at;
   END IF;
 
   RAISE NOTICE 'PASS: scheduled publishing verification succeeded';
