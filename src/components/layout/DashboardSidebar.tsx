@@ -9,6 +9,7 @@ import {
   LogOut,
   PenSquare,
   ExternalLink,
+  Tags,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -49,6 +50,11 @@ const navItems = [
     label: "Categories",
     href: "/dashboard/categories",
     icon: FolderOpen,
+  },
+  {
+    label: "Tags",
+    href: "/dashboard/tags",
+    icon: Tags,
   },
 ];
 
