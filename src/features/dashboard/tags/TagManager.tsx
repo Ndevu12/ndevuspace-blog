@@ -169,7 +169,10 @@ export function TagManager() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Select value={mergeTarget} onValueChange={setMergeTarget}>
+            <Select
+              value={mergeTarget}
+              onValueChange={(value) => setMergeTarget(value ?? "")}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Choose target tag" />
               </SelectTrigger>
