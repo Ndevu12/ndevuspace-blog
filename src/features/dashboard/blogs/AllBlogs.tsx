@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -77,7 +78,16 @@ export function AllBlogs() {
     clearFilters,
     loadBlogs,
     deleteBlog,
+    selectedIds,
+    toggleSelected,
+    setSelected,
+    clearSelection,
+    bulkUpdateStatus,
+    bulkDelete,
   } = useAllBlogsStore();
+
+  const allSelected =
+    blogs.length > 0 && blogs.every((b) => selectedIds.includes(b.id));
 
   // Debounced search — sync searchInput → filters.search
   const debouncedSearch = useDebouncedValue(searchInput, 300);
@@ -107,6 +117,39 @@ export function AllBlogs() {
 
   function handleClearFilters() {
     clearFilters();
+  }
+
+  function handleBulkStatus(
+    status: "published" | "draft" | "archived",
+    verb: string
+  ) {
+    startTransition(async () => {
+      try {
+        const { ok, failed } = await bulkUpdateStatus(status);
+        if (failed) {
+          toast.error(`${ok} ${verb}, ${failed} failed`);
+        } else {
+          toast.success(`${ok} ${ok === 1 ? "post" : "posts"} ${verb}`);
+        }
+      } catch {
+        toast.error("Bulk action failed");
+      }
+    });
+  }
+
+  function handleBulkDelete() {
+    startTransition(async () => {
+      try {
+        const { ok, failed } = await bulkDelete();
+        if (failed) {
+          toast.error(`Deleted ${ok}, ${failed} failed`);
+        } else {
+          toast.success(`Deleted ${ok} ${ok === 1 ? "post" : "posts"}`);
+        }
+      } catch {
+        toast.error("Bulk delete failed");
+      }
+    });
   }
 
   function getStatusBadgeVariant(status?: string) {
@@ -235,6 +278,78 @@ export function AllBlogs() {
         </div>
       )}
 
+      {/* Bulk action bar — shown when one or more rows are selected */}
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/40 p-3">
+          <span className="text-sm font-medium">
+            {selectedIds.length} selected
+          </span>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => handleBulkStatus("published", "published")}
+            >
+              Publish
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => handleBulkStatus("draft", "moved to draft")}
+            >
+              Draft
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => handleBulkStatus("archived", "archived")}
+            >
+              Archive
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={isPending}
+                    className="text-destructive hover:text-destructive"
+                  />
+                }
+              >
+                <Trash2 className="mr-1 h-4 w-4" />
+                Delete
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete {selectedIds.length} posts</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Permanently delete the {selectedIds.length} selected{" "}
+                    {selectedIds.length === 1 ? "post" : "posts"}? This cannot be
+                    undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleBulkDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Button size="sm" variant="ghost" onClick={clearSelection}>
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <div className="flex items-center justify-between rounded-lg border border-destructive/50 bg-destructive/10 p-4">
@@ -254,6 +369,17 @@ export function AllBlogs() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={() =>
+                    allSelected
+                      ? clearSelection()
+                      : setSelected(blogs.map((b) => b.id))
+                  }
+                  aria-label="Select all on this page"
+                />
+              </TableHead>
               <TableHead className="w-[40%]">Title</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="hidden md:table-cell">Category</TableHead>
@@ -265,6 +391,9 @@ export function AllBlogs() {
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-4" />
+                  </TableCell>
                   <TableCell>
                     <Skeleton className="h-5 w-full" />
                   </TableCell>
@@ -284,13 +413,23 @@ export function AllBlogs() {
               ))
             ) : blogs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   <p className="text-muted-foreground">No blogs found.</p>
                 </TableCell>
               </TableRow>
             ) : (
               blogs.map((blog) => (
-                <TableRow key={blog.id}>
+                <TableRow
+                  key={blog.id}
+                  data-state={selectedIds.includes(blog.id) ? "selected" : undefined}
+                >
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.includes(blog.id)}
+                      onCheckedChange={() => toggleSelected(blog.id)}
+                      aria-label={`Select ${blog.title}`}
+                    />
+                  </TableCell>
                   <TableCell>
                     <div>
                       <p className="font-medium truncate max-w-[300px]">
