@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   X,
   Plus,
+  CalendarClock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -81,10 +82,12 @@ export function NewBlog() {
       metaTitle: "",
       metaDescription: "",
       status: "draft",
+      publishAt: "",
     },
   });
 
   const status = watch("status");
+  const publishAt = watch("publishAt") ?? "";
   const content = watch("content");
   const categoryId = watch("categoryId") ?? "";
   const imageUrl = watch("imageUrl") ?? "";
@@ -117,13 +120,18 @@ export function NewBlog() {
         if (data.metaTitle) formData.append("metaTitle", data.metaTitle);
         if (data.metaDescription) formData.append("metaDescription", data.metaDescription);
         formData.append("status", data.status);
+        if (data.status === "scheduled" && data.publishAt) {
+          formData.append("publishAt", new Date(data.publishAt).toISOString());
+        }
 
         await dashboardBlogService.createBlog(formData);
         clearDraft();
         toast.success(
           data.status === "published"
             ? "Blog published successfully!"
-            : "Blog saved as draft."
+            : data.status === "scheduled"
+              ? "Blog scheduled."
+              : "Blog saved as draft."
         );
         router.push("/dashboard/blogs");
       } catch (error) {
@@ -141,6 +149,20 @@ export function NewBlog() {
 
   function handlePublish() {
     setValue("status", "published");
+    handleSubmit(onSubmit)();
+  }
+
+  function handleSchedule() {
+    const when = publishAt;
+    if (!when) {
+      toast.error("Pick a date & time to schedule");
+      return;
+    }
+    if (new Date(when) <= new Date()) {
+      toast.error("Pick a time in the future");
+      return;
+    }
+    setValue("status", "scheduled");
     handleSubmit(onSubmit)();
   }
 
@@ -183,6 +205,16 @@ export function NewBlog() {
             <Save className="mr-2 h-4 w-4" />
             Save Draft
           </Button>
+          {publishAt && (
+            <Button
+              variant="secondary"
+              onClick={handleSchedule}
+              disabled={isPending}
+            >
+              <CalendarClock className="mr-2 h-4 w-4" />
+              Schedule
+            </Button>
+          )}
           <Button onClick={handlePublish} disabled={isPending}>
             {isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -279,8 +311,24 @@ export function NewBlog() {
               <p className="text-xs text-muted-foreground">
                 {status === "published"
                   ? "This post will be visible to readers."
-                  : "This post will be saved as a draft."}
+                  : status === "scheduled"
+                    ? "This post will publish automatically at the time below."
+                    : "This post will be saved as a draft."}
               </p>
+
+              <div className="space-y-2 border-t border-border pt-4">
+                <Label htmlFor="publish-at">Schedule for later</Label>
+                <Input
+                  id="publish-at"
+                  type="datetime-local"
+                  {...register("publishAt")}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Set a future time and press <strong>Schedule</strong> — it
+                  publishes automatically then (checked every minute), no further
+                  action needed.
+                </p>
+              </div>
             </CardContent>
           </Card>
 

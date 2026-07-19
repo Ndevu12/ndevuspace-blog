@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import {
   Save,
   Rocket,
+  CalendarClock,
   Loader2,
   ArrowLeft,
   X,
@@ -51,6 +52,17 @@ interface EditBlogProps {
   blogId: string;
 }
 
+/** Format an ISO datetime to a `datetime-local` input value in local time. */
+function toDateTimeLocal(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours()
+  )}:${pad(d.getMinutes())}`;
+}
+
 export function EditBlog({ blogId }: EditBlogProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -79,10 +91,12 @@ export function EditBlog({ blogId }: EditBlogProps) {
       metaTitle: "",
       metaDescription: "",
       status: "draft",
+      publishAt: "",
     },
   });
 
   const status = watch("status");
+  const publishAt = watch("publishAt") ?? "";
   const content = watch("content");
   const categoryId = watch("categoryId") ?? "";
   const imageUrl = watch("imageUrl") ?? "";
@@ -134,7 +148,9 @@ export function EditBlog({ blogId }: EditBlogProps) {
           imageUrl: blog.imageUrl || "",
           metaTitle: blog.metaTitle || "",
           metaDescription: blog.metaDescription || "",
-          status: (blog.status as "published" | "draft") || "draft",
+          status:
+            (blog.status as "published" | "draft" | "scheduled") || "draft",
+          publishAt: toDateTimeLocal(blog.publishAt),
         };
         const nextSourceFingerprint = JSON.stringify(baselineValues);
 
@@ -172,10 +188,17 @@ export function EditBlog({ blogId }: EditBlogProps) {
         if (data.metaTitle) formData.append("metaTitle", data.metaTitle);
         if (data.metaDescription) formData.append("metaDescription", data.metaDescription);
         formData.append("status", data.status);
+        if (data.status === "scheduled" && data.publishAt) {
+          formData.append("publishAt", new Date(data.publishAt).toISOString());
+        }
 
         await dashboardBlogService.updateBlog(blogId, formData);
         clearDraft();
-        toast.success("Blog updated successfully!");
+        toast.success(
+          data.status === "scheduled"
+            ? "Blog scheduled."
+            : "Blog updated successfully!"
+        );
         router.push("/dashboard/blogs");
       } catch (error) {
         toast.error(
@@ -192,6 +215,20 @@ export function EditBlog({ blogId }: EditBlogProps) {
 
   function handlePublish() {
     setValue("status", "published");
+    handleSubmit(onSubmit)();
+  }
+
+  function handleSchedule() {
+    const when = publishAt;
+    if (!when) {
+      toast.error("Pick a date & time to schedule");
+      return;
+    }
+    if (new Date(when) <= new Date()) {
+      toast.error("Pick a time in the future");
+      return;
+    }
+    setValue("status", "scheduled");
     handleSubmit(onSubmit)();
   }
 
@@ -251,6 +288,16 @@ export function EditBlog({ blogId }: EditBlogProps) {
             <Save className="mr-2 h-4 w-4" />
             Save Draft
           </Button>
+          {publishAt && (
+            <Button
+              variant="secondary"
+              onClick={handleSchedule}
+              disabled={isPending}
+            >
+              <CalendarClock className="mr-2 h-4 w-4" />
+              Schedule
+            </Button>
+          )}
           <Button onClick={handlePublish} disabled={isPending}>
             {isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -339,8 +386,24 @@ export function EditBlog({ blogId }: EditBlogProps) {
               <p className="text-xs text-muted-foreground">
                 {status === "published"
                   ? "This post is live."
-                  : "This post is a draft."}
+                  : status === "scheduled"
+                    ? "This post will publish automatically at the time below."
+                    : "This post is a draft."}
               </p>
+
+              <div className="space-y-2 border-t border-border pt-4">
+                <Label htmlFor="publish-at">Schedule for later</Label>
+                <Input
+                  id="publish-at"
+                  type="datetime-local"
+                  {...register("publishAt")}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Set a future time and press <strong>Schedule</strong> — it
+                  publishes automatically then (checked every minute), no further
+                  action needed.
+                </p>
+              </div>
             </CardContent>
           </Card>
 
