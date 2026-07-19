@@ -198,6 +198,12 @@ function buildPayloadFromFormData(formData: FormData): BlogAdminRpcPayload {
     payload.tag_names = tagNames;
   }
 
+  // Only meaningful when status is 'scheduled'; the RPC validates it.
+  const publishAt = String(formData.get("publishAt") ?? "").trim();
+  if (publishAt) {
+    payload.publish_at = publishAt;
+  }
+
   return payload;
 }
 

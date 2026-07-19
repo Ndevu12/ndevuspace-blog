@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-export type BlogDraftStatus = "draft" | "published";
+export type BlogDraftStatus = "draft" | "published" | "scheduled";
 
 export interface BlogDraftValues {
   title: string;
@@ -14,6 +14,7 @@ export interface BlogDraftValues {
   metaTitle: string;
   metaDescription: string;
   status: BlogDraftStatus;
+  publishAt: string;
 }
 
 export interface BlogDraftEntry {

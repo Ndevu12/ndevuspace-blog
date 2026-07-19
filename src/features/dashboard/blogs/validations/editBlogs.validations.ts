@@ -9,6 +9,8 @@ export const blogFormSchema = z.object({
     imageUrl: z.string().optional(),
     metaTitle: z.string().optional(),
     metaDescription: z.string().optional(),
-    status: z.enum(["published", "draft"]),
+    status: z.enum(["published", "draft", "scheduled"]),
+    /** datetime-local value; required by the UI when status = 'scheduled'. */
+    publishAt: z.string().optional(),
   });
   
