@@ -2,7 +2,8 @@
 -- Migration: 20260718000200_blog_scheduled_publishing.sql
 -- Domain: BLOGS
 -- Type: Column + RPCs + pg_cron schedule
--- Purpose: Future-dated auto-publishing. Admins schedule a post; a pg_cron job
+-- Purpose: Future-dated auto-publishing. A post's author (or an admin)
+--          schedules it; a pg_cron job
 --          flips due 'scheduled' posts to 'published' every minute — no user
 --          intervention. Public read RPCs need no change: a scheduled post is
 --          simply not 'published' until the job flips it.
@@ -23,9 +24,9 @@ CREATE INDEX IF NOT EXISTS blogs_scheduled_publish_at_idx
   ON public.blogs (publish_at)
   WHERE status = 'scheduled';
 
--- ── Admin: schedule a post for future publication ────────────────────────────
+-- ── Schedule a post for future publication (author or admin) ─────────────────
 
-CREATE OR REPLACE FUNCTION public.blog_admin_schedule(
+CREATE OR REPLACE FUNCTION public.blog_schedule_post(
   p_blog_id uuid,
   p_publish_at timestamptz
 )
@@ -71,8 +72,8 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.blog_admin_schedule(uuid, timestamptz) IS
-  'Admin blog write RPC. Args: p_blog_id uuid, p_publish_at timestamptz (must be future). Enforces RBAC (row author or admin). Sets status=scheduled + publish_at and clears published_at. Returns {"ok":true,"id","status":"scheduled","publishAt"}. A pg_cron job publishes it at publish_at.';
+COMMENT ON FUNCTION public.blog_schedule_post(uuid, timestamptz) IS
+  'Blog scheduling write RPC (not admin-only). Args: p_blog_id uuid, p_publish_at timestamptz (must be future). Callable by any authenticated user; RBAC is enforced in-function via blog_assert_blog_write_access (row author or admin). Sets status=scheduled + publish_at and clears published_at. Returns {"ok":true,"id","status":"scheduled","publishAt"}. A pg_cron job publishes it at publish_at.';
 
 -- ── System: publish all due scheduled posts (the cron target) ────────────────
 
@@ -105,8 +106,8 @@ COMMENT ON FUNCTION public.blog_publish_due() IS
 
 -- ── Grants ───────────────────────────────────────────────────────────────────
 
-REVOKE ALL ON FUNCTION public.blog_admin_schedule(uuid, timestamptz) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.blog_admin_schedule(uuid, timestamptz) TO authenticated;
+REVOKE ALL ON FUNCTION public.blog_schedule_post(uuid, timestamptz) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.blog_schedule_post(uuid, timestamptz) TO authenticated;
 
 -- System-only: pg_cron runs as postgres; an Edge Function would use service_role.
 REVOKE ALL ON FUNCTION public.blog_publish_due() FROM PUBLIC, anon, authenticated;

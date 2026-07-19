@@ -3,7 +3,7 @@
 -- ============================================================================
 -- Validates:
 -- 1) Non-admin (non-owner) cannot schedule a post
--- 2) blog_admin_schedule sets status=scheduled + publish_at, clears published_at
+-- 2) blog_schedule_post sets status=scheduled + publish_at, clears published_at
 -- 3) A future publish time is rejected
 -- 4) blog_publish_due() leaves not-yet-due posts alone
 -- 5) blog_publish_due() flips due posts to published (published_at = publish_at)
@@ -63,7 +63,7 @@ BEGIN
   PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
   PERFORM set_config('request.jwt.claim.sub', v_user::text, true);
   BEGIN
-    PERFORM public.blog_admin_schedule(v_blog, timezone('utc', now()) + interval '1 day');
+    PERFORM public.blog_schedule_post(v_blog, timezone('utc', now()) + interval '1 day');
     RAISE EXCEPTION 'FAIL: non-admin was allowed to schedule a post';
   EXCEPTION WHEN insufficient_privilege THEN NULL; END;
 
@@ -72,12 +72,12 @@ BEGIN
 
   -- 3) Past publish time rejected.
   BEGIN
-    PERFORM public.blog_admin_schedule(v_blog, timezone('utc', now()) - interval '1 hour');
+    PERFORM public.blog_schedule_post(v_blog, timezone('utc', now()) - interval '1 hour');
     RAISE EXCEPTION 'FAIL: a past publish time was accepted';
   EXCEPTION WHEN sqlstate '22023' THEN NULL; END;
 
   -- 2) Schedule for the future.
-  v_res := public.blog_admin_schedule(v_blog, timezone('utc', now()) + interval '1 day');
+  v_res := public.blog_schedule_post(v_blog, timezone('utc', now()) + interval '1 day');
   SELECT status::text, published_at, publish_at
   INTO v_status, v_published_at, v_publish_at
   FROM public.blogs WHERE id = v_blog;
