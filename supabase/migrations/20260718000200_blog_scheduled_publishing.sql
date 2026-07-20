@@ -114,21 +114,40 @@ REVOKE ALL ON FUNCTION public.blog_publish_due() FROM PUBLIC, anon, authenticate
 GRANT EXECUTE ON FUNCTION public.blog_publish_due() TO postgres, service_role;
 
 -- ── pg_cron: run the flip every minute (no user intervention) ────────────────
+-- Idempotent + non-fatal. On managed Postgres (e.g. Supabase) pg_cron is often
+-- already enabled, and re-issuing CREATE EXTENSION against the existing one
+-- fails with 2BP01 (dependent privileges). So only create it when it is truly
+-- absent, and never let the cron wiring abort the migration — the RPCs above
+-- are the important part; scheduling can also be driven by an Edge Function /
+-- external cron if pg_cron is unavailable.
 
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-
--- Re-schedule idempotently so re-running the migration doesn't stack jobs.
 DO $$
 BEGIN
-  PERFORM cron.unschedule(jobid)
-  FROM cron.job
-  WHERE jobname = 'blog-publish-due';
+  IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    BEGIN
+      EXECUTE 'CREATE EXTENSION pg_cron';
+    EXCEPTION WHEN OTHERS THEN
+      RAISE NOTICE 'Could not enable pg_cron (%). Enable it once, then re-run — or schedule blog_publish_due() via an Edge Function / external cron.', SQLERRM;
+    END;
+  END IF;
+END $$;
 
-  PERFORM cron.schedule(
-    'blog-publish-due',
-    '* * * * *',
-    'SELECT public.blog_publish_due();'
-  );
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    -- Re-schedule idempotently so re-running the migration doesn't stack jobs.
+    PERFORM cron.unschedule(jobid)
+    FROM cron.job
+    WHERE jobname = 'blog-publish-due';
+
+    PERFORM cron.schedule(
+      'blog-publish-due',
+      '* * * * *',
+      'SELECT public.blog_publish_due();'
+    );
+  ELSE
+    RAISE NOTICE 'pg_cron unavailable; blog_publish_due() was not scheduled. Drive it via an Edge Function / external cron, or enable pg_cron and re-run.';
+  END IF;
 END $$;
 
 -- =============================================================================
