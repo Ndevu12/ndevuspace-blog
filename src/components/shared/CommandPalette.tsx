@@ -4,11 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FileText,
+  FolderOpen,
   LayoutDashboard,
   Loader2,
+  MessageSquare,
   Newspaper,
   Plus,
-  Tag,
+  Tags,
 } from "lucide-react";
 import {
   Command,
@@ -38,14 +40,19 @@ const DASHBOARD_NAV = [
   { label: "Dashboard overview", href: "/dashboard", Icon: LayoutDashboard },
   { label: "All blogs", href: "/dashboard/blogs", Icon: FileText },
   { label: "New blog", href: "/dashboard/blogs/new", Icon: Plus },
-  { label: "Categories", href: "/dashboard/categories", Icon: Tag },
+  { label: "Categories", href: "/dashboard/categories", Icon: FolderOpen },
+  { label: "Tags", href: "/dashboard/tags", Icon: Tags },
+  { label: "Comments", href: "/dashboard/comments", Icon: MessageSquare },
 ] as const;
 
+/** Admin post view inside the dashboard (never the public article page). */
+const dashboardPostHref = (id: string) => `/dashboard/blogs/${id}`;
+
 /**
- * Dashboard ⌘K palette: jump to dashboard views, recent posts, or any
- * published article via server-driven search. Post search is debounced and
- * remote, so cmdk's own filtering is off; article selection opens the
- * published page.
+ * Dashboard ⌘K palette: jump to dashboard views, recent posts, or any post
+ * via server-driven search. Post search is debounced and remote, so cmdk's
+ * own filtering is off; selecting a post opens it inside the dashboard (its
+ * admin detail page) so the admin never leaves the dashboard.
  */
 export function CommandPalette() {
   const router = useRouter();
@@ -161,7 +168,7 @@ export function CommandPalette() {
               <CommandItem
                 key={post.id}
                 value={`post-${post.id}`}
-                onSelect={() => navigate(`/blog/${post.slug}`)}
+                onSelect={() => navigate(dashboardPostHref(post.id))}
               >
                 <FileText aria-hidden />
                 <span className="truncate">{post.title}</span>
@@ -176,7 +183,7 @@ export function CommandPalette() {
               <CommandItem
                 key={post.id}
                 value={`recent-${post.id}`}
-                onSelect={() => navigate(`/blog/${post.slug}`)}
+                onSelect={() => navigate(dashboardPostHref(post.id))}
               >
                 <Newspaper aria-hidden />
                 <span className="truncate">{post.title}</span>
