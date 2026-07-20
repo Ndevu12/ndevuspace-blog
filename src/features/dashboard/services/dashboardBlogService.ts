@@ -198,6 +198,12 @@ function buildPayloadFromFormData(formData: FormData): BlogAdminRpcPayload {
     payload.tag_names = tagNames;
   }
 
+  // Only meaningful when status is 'scheduled'; the RPC validates it.
+  const publishAt = String(formData.get("publishAt") ?? "").trim();
+  if (publishAt) {
+    payload.publish_at = publishAt;
+  }
+
   return payload;
 }
 
@@ -263,6 +269,18 @@ export async function updateBlogStatus(blogId: string, status: BlogStatus): Prom
 
   if (error) {
     throw new Error(error.message || "Failed to update blog status.");
+  }
+}
+
+export async function scheduleBlog(blogId: string, publishAtIso: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("blog_schedule_post", {
+    p_blog_id: blogId,
+    p_publish_at: publishAtIso,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Failed to schedule blog.");
   }
 }
 
@@ -372,6 +390,7 @@ export const dashboardBlogService = {
   createBlog,
   updateBlog,
   updateBlogStatus,
+  scheduleBlog,
   deleteBlog,
   getDashboardStats,
   getDashboardRecentActivity,
