@@ -21,6 +21,7 @@ const EMPTY_VALUES: BlogDraftValues = {
   metaTitle: "",
   metaDescription: "",
   status: "draft",
+  publishAt: "",
 };
 
 type DraftMode = "new" | "edit";
@@ -58,6 +59,7 @@ function normalizeValues(
     metaTitle: values?.metaTitle ?? EMPTY_VALUES.metaTitle,
     metaDescription: values?.metaDescription ?? EMPTY_VALUES.metaDescription,
     status: values?.status ?? EMPTY_VALUES.status,
+    publishAt: values?.publishAt ?? EMPTY_VALUES.publishAt,
   };
 }
 

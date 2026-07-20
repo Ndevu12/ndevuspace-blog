@@ -48,6 +48,10 @@ interface AllBlogsState {
   clearFilters: () => void;
   loadBlogs: () => Promise<void>;
   deleteBlog: (blogId: string) => Promise<void>;
+  /** Schedule a post for future auto-publication (pg_cron flips it when due). */
+  scheduleBlog: (blogId: string, publishAtIso: string) => Promise<void>;
+  /** Publish a scheduled (or draft) post immediately. */
+  publishNow: (blogId: string) => Promise<void>;
 
   // Bulk selection
   toggleSelected: (blogId: string) => void;
@@ -109,6 +113,16 @@ export const useAllBlogsStore = create<AllBlogsState>((set, get) => ({
   deleteBlog: async (blogId) => {
     await dashboardBlogService.deleteBlog(blogId);
     // Reload after deletion
+    await get().loadBlogs();
+  },
+
+  scheduleBlog: async (blogId, publishAtIso) => {
+    await dashboardBlogService.scheduleBlog(blogId, publishAtIso);
+    await get().loadBlogs();
+  },
+
+  publishNow: async (blogId) => {
+    await dashboardBlogService.updateBlogStatus(blogId, "published");
     await get().loadBlogs();
   },
 
