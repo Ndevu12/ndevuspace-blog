@@ -1,0 +1,30 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "dependabot/npm_and_yarn/npm_and_yarn-a6d74921fd",
+    "main",
+    "origin",
+    "security/auto-clean",
+    "security/auto-clean-main",
+    "security/auto-clean-main-2",
+    "security/auto-clean-main-3"
+  ],
+  "parent": {
+    "dependabot/npm_and_yarn/npm_and_yarn-a6d74921fd": "main",
+    "main": null,
+    "origin": "main",
+    "security/auto-clean": "main",
+    "security/auto-clean-main": "security/auto-clean",
+    "security/auto-clean-main-2": "security/auto-clean-main",
+    "security/auto-clean-main-3": "security/auto-clean-main"
+  },
+  "order": [
+    "main",
+    "dependabot/npm_and_yarn/npm_and_yarn-a6d74921fd",
+    "origin",
+    "security/auto-clean",
+    "security/auto-clean-main",
+    "security/auto-clean-main-2",
+    "security/auto-clean-main-3"
+  ]
+}
